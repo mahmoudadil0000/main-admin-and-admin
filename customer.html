@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'media',
+      }
+    </script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 min-h-screen font-sans flex flex-col">
+    
+    <!-- Navbar -->
+    <nav class="bg-white dark:bg-zinc-800 shadow-sm px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+        <h1 class="text-xl font-bold tracking-tight" data-i18n="customer-title">Dentalic Clinic</h1>
+        <div class="flex items-center gap-4">
+            <button onclick="toggleLanguage()" id="lang-toggle-btn" class="text-xs font-black px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 hover:bg-gray-50 dark:hover:bg-zinc-700 transition-all">
+                العربية
+            </button>
+            <button id="logout-btn" class="text-sm font-semibold text-red-600 dark:text-red-400 hover:text-red-800 transition-colors" data-i18n="logout">
+                Logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col p-4 md:p-8 max-w-5xl mx-auto w-full">
+        <div class="mb-12 text-center">
+            <h1 class="text-4xl font-black uppercase tracking-tighter text-zinc-900 dark:text-white" data-i18n="customer-dashboard">Customer Dashboard</h1>
+            <p class="text-zinc-500 dark:text-zinc-400 mt-2 font-bold text-xs uppercase tracking-widest" data-i18n="welcome-customer">Clinic Management Portal</p>
+        </div>
+        
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <!-- Book Patient Card -->
+            <div onclick="openBookPatientModal()" class="group relative cursor-pointer">
+                <div class="absolute inset-0 bg-blue-600 dark:bg-yellow-400 translate-x-2 translate-y-2 brutalist-shadow transition-transform group-hover:translate-x-1 group-hover:translate-y-1"></div>
+                <div class="relative bg-white dark:bg-zinc-800 border-2 border-zinc-900 dark:border-zinc-100 p-8 flex flex-col items-center justify-center text-center h-full brutalist-shadow">
+                    <div class="w-16 h-16 rounded-full bg-blue-50 dark:bg-zinc-900 flex items-center justify-center mb-4 border-2 border-zinc-900 dark:border-zinc-100">
+                        <i class="fa-solid fa-calendar-plus text-2xl text-blue-600 dark:text-yellow-400"></i>
+                    </div>
+                    <h2 class="font-black uppercase tracking-tight text-lg mb-1" data-i18n="book-patient-btn">Book Patient</h2>
+                    <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-widest" data-i18n="book-patient-desc">Find and reserve cases</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Book Patient Modal (Wizard) -->
+    <div id="book-patient-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
+                <h2 class="text-xl font-bold">Book Patient</h2>
+                <button onclick="closeBookPatientModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+
+            
+            <div class="p-6 overflow-y-auto">
+                <!-- Step Progress -->
+                <div class="flex justify-between mb-8 relative">
+                    <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-zinc-700 -z-10 transform -translate-y-1/2"></div>
+                    <div class="absolute top-1/2 left-0 h-1 bg-blue-500 -z-10 transform -translate-y-1/2 transition-all duration-300" id="c-step-progress-bar" style="width: 0%"></div>
+                    
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm" id="c-indicator-1">1</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm" id="c-indicator-2">2</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm" id="c-indicator-3">3</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm" id="c-indicator-4">4</div>
+                </div>
+
+                <form id="book-patient-form" onsubmit="return false;">
+                    <!-- Step 1: Governorate -->
+                    <div id="c-step-1" class="c-step-content block">
+                        <h3 class="font-bold mb-4 text-lg">Select Governorate</h3>
+                        <select id="c-patient-gov" required class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            <option value="" disabled selected>Choose a Governorate...</option>
+                            <option value="Baghdad">Baghdad (بغداد)</option>
+                            <option value="Basra">Basra (البصرة)</option>
+                            <option value="Nineveh">Nineveh (نينوى)</option>
+                            <option value="Erbil">Erbil (أربيل)</option>
+                            <option value="Najaf">Najaf (النجف)</option>
+                            <option value="Karbala">Karbala (كربلاء)</option>
+                            <option value="Babil">Babil (بابل)</option>
+                            <option value="Dhi Qar">Dhi Qar (ذي قار)</option>
+                            <option value="Al Anbar">Al Anbar (الأنبار)</option>
+                            <option value="Maysan">Maysan (ميسان)</option>
+                            <option value="Diyala">Diyala (ديالى)</option>
+                            <option value="Al-Qādisiyyah">Al-Qādisiyyah (القادسية)</option>
+                            <option value="Wasit">Wasit (واسط)</option>
+                            <option value="Sulaymaniyah">Sulaymaniyah (السليمانية)</option>
+                            <option value="Duhok">Duhok (دهوك)</option>
+                            <option value="Kirkuk">Kirkuk (كركوك)</option>
+                            <option value="Muthanna">Muthanna (المثنى)</option>
+                            <option value="Halabja">Halabja (حلبجة)</option>
+                        </select>
+                    </div>
+
+                    <!-- Step 2: Case -->
+                    <div id="c-step-2" class="c-step-content hidden">
+                        <h3 class="font-bold mb-4 text-lg">Select Required Case(s)</h3>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="c-patient-case" value="Ortho" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Ortho</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="c-patient-case" value="Medicine" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Medicine</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="c-patient-case" value="Pedo" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Pedo</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="c-patient-case" value="Pros" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Pros</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="c-patient-case" value="Perio" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Perio</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="c-patient-case" value="Operative" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Operative</div>
+                            </label>
+                            <label class="cursor-pointer md:col-span-2">
+                                <input type="checkbox" name="c-patient-case" value="Exo" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Exo</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Clinic Days -->
+                    <div id="c-step-3" class="c-step-content hidden">
+                        <h3 class="font-bold mb-4 text-lg">Select Clinic Day</h3>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <label class="cursor-pointer md:col-span-2">
+                                <input type="radio" name="c-patient-days" value="All Days" class="peer sr-only" required>
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-bold text-center">Any Day (أي يوم)</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="c-patient-days" value="Sunday" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Sunday</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="c-patient-days" value="Monday" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Monday</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="c-patient-days" value="Tuesday" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Tuesday</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="c-patient-days" value="Wednesday" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Wednesday</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="c-patient-days" value="Thursday" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Thursday</div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="c-patient-days" value="Saturday" class="peer sr-only">
+                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Saturday</div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Results -->
+                    <div id="c-step-4" class="c-step-content hidden">
+                        <h3 class="font-bold mb-4 text-lg">Available Patients</h3>
+                        <div id="search-results-container" class="flex flex-col gap-4">
+                            <!-- Results will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-8">
+                        <button type="button" id="c-btn-prev" class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors hidden">Back</button>
+                        <button type="button" id="c-btn-next" class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white transition-colors ml-auto shadow-lg shadow-blue-600/30">Next</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script src="js/i18n.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/patients.js"></script>
+    <script>
+        // Additional keys for customer page
+        Object.assign(translations.en, {
+            'customer-title': 'Dentalic Clinic',
+            'customer-dashboard': 'Customer Dashboard',
+            'welcome-customer': 'Clinic Management Portal',
+            'book-patient-btn': 'Book Patient',
+            'book-patient-desc': 'Find and reserve cases',
+            'book-now': 'Book Now',
+            'location': 'Location',
+            'persons': 'Persons',
+            'day': 'Day',
+            'phone': 'Phone',
+            'patient-case': 'Patient Case'
+        });
+        Object.assign(translations.ar, {
+            'customer-title': 'عيادة دينتاليك',
+            'customer-dashboard': 'لوحة تحكم الكوستمر',
+            'welcome-customer': 'بوابة إدارة العيادة',
+            'book-patient-btn': 'حجز مريض',
+            'book-patient-desc': 'ابحث واحجز الحالات المتوفرة',
+            'book-now': 'احجز الآن',
+            'location': 'الموقع',
+            'persons': 'عدد الأشخاص',
+            'day': 'اليوم',
+            'phone': 'رقم الهاتف',
+            'patient-case': 'حالة مريض'
+        });
+        const db = firebase.firestore();
+
+        // Protect Page & Enforce Customer Role
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Verify they have customer access
+            db.collection('users').doc(user.uid).get().then((doc) => {
+                if (doc.exists) {
+                    const userData = doc.data();
+                    if (userData.role === 'main_admin') {
+                        window.location.href = 'main-admin.html';
+                    } else if (userData.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else if (userData.role !== 'customer') {
+                        // Unauthorized
+                        firebase.auth().signOut();
+                    }
+                } else {
+                    // Fallback local test
+                    if (user.email === 'mahmod.adil2001@gmail.com') {
+                        window.location.href = 'main-admin.html';
+                    } else {
+                        // Account was deleted from database
+                        firebase.auth().signOut().then(() => {
+                            window.location.href = 'index.html';
+                        });
+                    }
+                }
+            }).catch(err => {
+                console.error("Error verifying role:", err);
+            });
+        });
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            firebase.auth().signOut().then(() => {
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+    <script src="js/customer.js"></script>
+</body>
+</html>
