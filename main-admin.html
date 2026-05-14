@@ -18,6 +18,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- firebase-config.js MUST load before auth-guard.js to initialize Firebase -->
+    <script src="js/core.js"></script>
     <link rel="stylesheet" href="css/style.css">
     
     <style>
@@ -110,6 +112,14 @@
                         <i class="fa-solid fa-list-check"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base" data-i18n="system-activity">System Activity</h2>
+                </div>
+
+                <!-- Patient PDF System Card -->
+                <div id="card-pdf-system" onclick="sessionStorage.setItem('pdf_source', 'main-admin.html'); window.location.href='patient_pdf_system.html'" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div class="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-rose-500 group-hover:text-white transition-all">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <h2 class="font-black text-sm md:text-base">Patient PDF System</h2>
                 </div>
 
             </div>
@@ -223,7 +233,13 @@
     <div id="add-patient-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
-                <h2 class="text-xl font-bold">Add Patient</h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold">Add Patient</h2>
+                    <button onclick="openImportPdfModal()" type="button" class="px-3 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-black uppercase tracking-wider border border-rose-100 dark:border-rose-800 hover:bg-rose-100 transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>Import from PDF</span>
+                    </button>
+                </div>
                 <button onclick="closeAddPatientModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
@@ -834,9 +850,7 @@
     </div>
 
     <!-- App Scripts -->
-    <script src="js/i18n.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/utils.js"></script>
+    
     <script src="js/dashboard.js"></script>
     <script src="js/patients.js"></script>
     <script src="js/telegram-users.js"></script>
