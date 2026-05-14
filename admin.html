@@ -901,14 +901,15 @@
             const hasAdd = can('add-patient');
             const hasView = can('view-patients');
             const hasTG = can('tg-users');
+            const hasPDF = can('pdf-system');
 
             toggleElement('card-add-patient', hasAdd);
             toggleElement('card-view-patients', hasView);
             toggleElement('card-tg-users', hasTG);
-            toggleElement('card-pdf-system', hasView); // Shared with view-patients
+            toggleElement('card-pdf-system', hasPDF);
 
             // Check if any card is visible
-            const anyVisible = hasAdd || hasView || hasTG;
+            const anyVisible = hasAdd || hasView || hasTG || hasPDF;
             toggleElement('no-access-msg', !anyVisible);
         }
 
