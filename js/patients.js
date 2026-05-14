@@ -11,7 +11,7 @@ const btnPrev = document.getElementById('btn-prev');
 const btnSubmit = document.getElementById('btn-submit');
 const progressBar = document.getElementById('step-progress-bar');
 
-window.openAddPatientModal = function() {
+window.openAddPatientModal = function () {
     // If currentUserData is not yet loaded (auth-guard still resolving), wait briefly then retry.
     if (!window.currentUserData) {
         let attempts = 0;
@@ -40,7 +40,7 @@ window.openAddPatientModal = function() {
     updateImportedImagesPreview();
 }
 
-window.closeAddPatientModal = function() {
+window.closeAddPatientModal = function () {
     patientModal.classList.add('hidden');
 }
 
@@ -84,14 +84,14 @@ function validateStep(step) {
 function updateWizardUI() {
     // Hide all steps
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-    
+
     // Show current step
     document.getElementById(`step-${currentStep}`).classList.remove('hidden');
-    
+
     // Update progress bar
     const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
     progressBar.style.width = `${progress}%`;
-    
+
     // Update step indicators
     for (let i = 1; i <= totalSteps; i++) {
         const indicator = document.getElementById(`indicator-${i}`);
@@ -103,19 +103,20 @@ function updateWizardUI() {
             indicator.classList.remove('bg-blue-600', 'text-white');
         }
     }
-    
+
     // Update buttons
     btnPrev.classList.toggle('hidden', currentStep === 1);
-    
+
     if (currentStep === totalSteps) {
         btnNext.classList.add('hidden');
         btnSubmit.classList.remove('hidden');
-        
+
         // Populate preview
         document.getElementById('preview-gov').textContent = document.getElementById('patient-gov').value;
         const selectedCases = Array.from(document.querySelectorAll('input[name="patient-case"]:checked')).map(el => el.value).join(', ');
         document.getElementById('preview-case').textContent = selectedCases;
-        document.getElementById('preview-days').textContent = document.querySelector('input[name="patient-days"]:checked').value;
+        const selectedDays = Array.from(document.querySelectorAll('input[name="patient-days"]:checked')).map(el => el.value).join(', ');
+        document.getElementById('preview-days').textContent = selectedDays || '-';
     } else {
         btnNext.classList.remove('hidden');
         btnSubmit.classList.add('hidden');
@@ -126,10 +127,10 @@ function updateWizardUI() {
 patientForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!validateStep(4)) return;
-    
+
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    
+
     try {
         const db = firebase.firestore();
         const currentUser = firebase.auth().currentUser;
@@ -137,16 +138,16 @@ patientForm.addEventListener('submit', async (e) => {
 
         let imageUrls = [];
         const imageFiles = document.getElementById('patient-image').files;
-        
+
         if (imageFiles.length > 0) {
             btnSubmit.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Uploading ${imageFiles.length} Image(s)...`;
-            
+
             for (let i = 0; i < imageFiles.length; i++) {
                 const formData = new FormData();
                 formData.append('file', imageFiles[i]);
                 formData.append('upload_preset', 'patient');
                 formData.append('folder', 'patients');
-                
+
                 const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/dpda74vzy/image/upload', {
                     method: 'POST',
                     body: formData
@@ -157,7 +158,7 @@ patientForm.addEventListener('submit', async (e) => {
                 }
             }
         }
-        
+
         btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Data...';
 
         const newPatient = {
@@ -178,12 +179,12 @@ patientForm.addEventListener('submit', async (e) => {
 
         // Note: Make sure Firestore Rules allow writes to the 'patients' collection!
         await db.collection('patients').add(newPatient);
-        
+
         // Log event
         if (window.logSystemEvent) {
             await window.logSystemEvent('add_patient', `قام بإضافة مريض جديد: ${newPatient.patientName || 'بدون اسم'} (${newPatient.governorate})`);
         }
-        
+
         alert('Patient details saved successfully!');
         closeAddPatientModal();
     } catch (error) {
@@ -195,7 +196,7 @@ patientForm.addEventListener('submit', async (e) => {
     }
 });
 
-window.addPhoneInput = function() {
+window.addPhoneInput = function () {
     const container = document.getElementById('phone-numbers-container');
     const div = document.createElement('div');
     div.className = 'flex gap-2 mt-2';
@@ -210,7 +211,7 @@ window.addPhoneInput = function() {
 const patientInfoModal = document.getElementById('patient-info-modal');
 const patientsListContainer = document.getElementById('patients-list-container');
 
-window.openPatientInfoModal = function() {
+window.openPatientInfoModal = function () {
     // If currentUserData is not yet loaded (auth-guard still resolving), wait briefly then retry.
     if (!window.currentUserData) {
         let attempts = 0;
@@ -227,18 +228,18 @@ window.openPatientInfoModal = function() {
         return;
     }
 
-    if(patientInfoModal) {
+    if (patientInfoModal) {
         patientInfoModal.classList.remove('hidden');
         loadPatientsList();
     }
 }
 
-window.closePatientInfoModal = function() {
-    if(patientInfoModal) patientInfoModal.classList.add('hidden');
+window.closePatientInfoModal = function () {
+    if (patientInfoModal) patientInfoModal.classList.add('hidden');
 }
 
 // Close on backdrop click
-if(patientInfoModal) {
+if (patientInfoModal) {
     patientInfoModal.addEventListener('click', (e) => {
         if (e.target === patientInfoModal) {
             closePatientInfoModal();
@@ -283,10 +284,10 @@ async function getTelegramUserName(tgId) {
 }
 
 function loadPatientsList() {
-    if(!patientsListContainer) return;
+    if (!patientsListContainer) return;
     const db = firebase.firestore();
     patientsListContainer.innerHTML = '<p class="text-gray-500 col-span-2 text-center py-8"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</p>';
-    
+
     db.collection('patients').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
         allPatientsData = [];
         snapshot.forEach(doc => {
@@ -296,9 +297,9 @@ function loadPatientsList() {
     });
 }
 
-window.filterPatients = function() {
-    if(!patientsListContainer) return;
-    
+window.filterPatients = function () {
+    if (!patientsListContainer) return;
+
     const searchInput = document.getElementById('patient-search-input');
     const statusFilter = document.getElementById('patient-status-filter');
     const timeFilter = document.getElementById('patient-time-filter');
@@ -309,11 +310,11 @@ window.filterPatients = function() {
     const advStatus = document.getElementById('adv-status')?.value || 'All';
     const advCases = Array.from(document.querySelectorAll('input[name="adv-case"]:checked')).map(cb => cb.value);
     const advDays = Array.from(document.querySelectorAll('input[name="adv-day"]:checked')).map(cb => cb.value);
-    
+
     const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
     const statusVal = statusFilter ? statusFilter.value : 'All';
     const timeVal = timeFilter ? timeFilter.value : 'All';
-    
+
     const now = Date.now();
     const oneDay = 24 * 60 * 60 * 1000;
     const oneWeek = 7 * oneDay;
@@ -322,19 +323,19 @@ window.filterPatients = function() {
 
     const filtered = allPatientsData.filter(p => {
         // Basic Filters
-        const matchesSearch = !searchTerm || 
+        const matchesSearch = !searchTerm ||
             (p.patientName || '').toLowerCase().includes(searchTerm) ||
             (p.city || '').toLowerCase().includes(searchTerm) ||
             (p.governorate || '').toLowerCase().includes(searchTerm) ||
             (p.caseTypes || []).join(' ').toLowerCase().includes(searchTerm);
-        
+
         const matchesStatus = statusVal === 'All' || p.status === statusVal;
 
         // Advanced Filters Logic
         const matchesAdvGov = advGov === 'All' || p.governorate === advGov;
         const matchesAdvCity = !advCity || (p.city || '').toLowerCase().includes(advCity);
         const matchesAdvStatus = advStatus === 'All' || p.status === advStatus;
-        
+
         const matchesAdvCases = advCases.length === 0 || advCases.some(c => (p.caseTypes || []).includes(c));
         const matchesAdvDays = advDays.length === 0 || advDays.some(d => (p.clinicDays || '').includes(d));
 
@@ -352,13 +353,13 @@ window.filterPatients = function() {
         if (timeVal === '1y') return (now - createdAt) <= oneYear;
         return true;
     });
-    
+
     updateCounters(filtered);
     renderPatientsList(filtered);
     updateFilterIconState();
 }
 
-window.updateFilterIconState = function() {
+window.updateFilterIconState = function () {
     const advGov = document.getElementById('adv-gov')?.value || 'All';
     const advCity = document.getElementById('adv-city')?.value || '';
     const advStatus = document.getElementById('adv-status')?.value || 'All';
@@ -368,9 +369,9 @@ window.updateFilterIconState = function() {
     const quickTime = document.getElementById('patient-time-filter')?.value || 'All';
     const searchVal = document.getElementById('patient-search-input')?.value || '';
 
-    const isFiltered = advGov !== 'All' || advCity !== '' || advStatus !== 'All' || 
-                       advCases.length > 0 || advDays.length > 0 || 
-                       quickStatus !== 'All' || quickTime !== 'All' || searchVal !== '';
+    const isFiltered = advGov !== 'All' || advCity !== '' || advStatus !== 'All' ||
+        advCases.length > 0 || advDays.length > 0 ||
+        quickStatus !== 'All' || quickTime !== 'All' || searchVal !== '';
 
     const filterBtn = document.querySelector('button[onclick="openAdvancedFilter()"]');
     const filterIcon = filterBtn?.querySelector('i');
@@ -387,13 +388,13 @@ window.updateFilterIconState = function() {
     }
 }
 
-window.resetAdvancedFilter = function() {
+window.resetAdvancedFilter = function () {
     if (document.getElementById('adv-gov')) document.getElementById('adv-gov').value = 'All';
     if (document.getElementById('adv-city')) document.getElementById('adv-city').value = '';
     document.querySelectorAll('input[name="adv-day"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('input[name="adv-case"]').forEach(cb => cb.checked = false);
     if (document.getElementById('adv-status')) document.getElementById('adv-status').value = 'All';
-    
+
     // Quick filters
     if (document.getElementById('patient-status-filter')) document.getElementById('patient-status-filter').value = 'All';
     if (document.getElementById('patient-time-filter')) document.getElementById('patient-time-filter').value = 'All';
@@ -409,11 +410,11 @@ function updateCounters(patients) {
     const available = patients.filter(p => p.status === 'Available').length;
     const pending = patients.filter(p => p.status === 'Pending').length;
     const used = patients.filter(p => p.status === 'Used').length;
-    
+
     const countAvailable = document.getElementById('count-available');
     const countPending = document.getElementById('count-pending');
     const countUsed = document.getElementById('count-used');
-    
+
     if (countAvailable) countAvailable.textContent = available;
     if (countPending) countPending.textContent = pending;
     if (countUsed) countUsed.textContent = used;
@@ -421,36 +422,36 @@ function updateCounters(patients) {
 
 function renderPatientsList(patients) {
     patientsListContainer.innerHTML = '';
-    
+
     if (patients.length === 0) {
         const noResultsKey = currentLang === 'ar' ? 'لا يوجد مرضى مطابقين للبحث.' : 'No patients found matching your search.';
         patientsListContainer.innerHTML = `<p class="text-gray-500 text-center py-12 bg-white dark:bg-zinc-800 rounded-2xl border border-dashed border-gray-200 dark:border-zinc-700 font-medium">${noResultsKey}</p>`;
         return;
     }
-    
+
     patients.forEach(async p => {
         const patientStatus = p.status || 'Available';
         const createdByName = await getUserName(p.createdBy);
         const statusConfig = {
-            'Available': { 
-                bg: 'bg-emerald-50 dark:bg-emerald-900/30', 
+            'Available': {
+                bg: 'bg-emerald-50 dark:bg-emerald-900/30',
                 text: 'text-emerald-700 dark:text-emerald-400',
                 label: translations[currentLang]['available'] || 'Available'
             },
-            'Pending': { 
-                bg: 'bg-amber-50 dark:bg-amber-900/30', 
+            'Pending': {
+                bg: 'bg-amber-50 dark:bg-amber-900/30',
                 text: 'text-amber-700 dark:text-amber-400',
                 label: translations[currentLang]['pending'] || 'Pending'
             },
-            'Used': { 
-                bg: 'bg-zinc-100 dark:bg-zinc-800', 
+            'Used': {
+                bg: 'bg-zinc-100 dark:bg-zinc-800',
                 text: 'text-zinc-600 dark:text-zinc-400',
                 label: translations[currentLang]['used'] || 'Used'
             }
         };
 
         const config = statusConfig[patientStatus] || statusConfig['Available'];
-        
+
         // Translate Cases
         const translatedCases = (p.caseTypes || []).map(c => translations[currentLang][c] || c).join(' • ');
         // Translate Days
@@ -458,7 +459,7 @@ function renderPatientsList(patients) {
 
         const images = p.imageUrls || (p.imageUrl ? [p.imageUrl] : []);
         const mainImage = images.length > 0 ? images[0] : null;
-        
+
         const imageHtml = mainImage ? `
             <div class="w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex-shrink-0 border border-zinc-100 dark:border-zinc-700">
                 <img src="${mainImage}" alt="Patient" class="w-full h-full object-cover" onclick="event.stopPropagation(); window.open('${mainImage}', '_blank')">
@@ -539,7 +540,7 @@ function renderPatientsList(patients) {
     });
 }
 
-window.updatePatientStatus = async function(patientId, newStatus) {
+window.updatePatientStatus = async function (patientId, newStatus) {
     try {
         await firebase.firestore().collection('patients').doc(patientId).update({
             status: newStatus
@@ -640,7 +641,7 @@ window.renderPdfImportList = function (pagesToRender) {
         const isImported = existingPhones.has(p.phone) || (p.name && existingNames.has(p.name.toLowerCase()));
 
         return `
-            <div onclick="importPatientData(${originalIndex})" class="group p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800 border-2 ${isImported ? 'border-emerald-100 dark:border-emerald-900/30' : 'border-transparent'} hover:border-rose-400 hover:bg-white dark:hover:bg-zinc-700 cursor-pointer transition-all flex items-center gap-4 relative">
+            <div onclick="window.importPatientData(${originalIndex})" class="group p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800 border-2 ${isImported ? 'border-emerald-100 dark:border-emerald-900/30' : 'border-transparent'} hover:border-rose-400 hover:bg-white dark:hover:bg-zinc-700 cursor-pointer transition-all flex items-center gap-4 relative">
                 <div class="w-10 h-10 rounded-full ${isImported ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-500'} flex items-center justify-center text-sm font-black flex-shrink-0">
                     ${isImported ? '<i class="fa-solid fa-check"></i>' : (p.name ? p.name[0] : '#')}
                 </div>
@@ -679,55 +680,81 @@ window.importPatientData = function (index) {
         const p = pages[index];
         if (!p) return;
 
-        // Basic Info
+        // Arabic → English mapping
+        const GOV_MAP = {
+            'بغداد': 'Baghdad', 'البصرة': 'Basra', 'نينوى': 'Nineveh', 'أربيل': 'Erbil',
+            'النجف': 'Najaf', 'كربلاء': 'Karbala', 'بابل': 'Babil', 'ذي قار': 'Dhi Qar',
+            'الأنبار': 'Al Anbar', 'ميسان': 'Maysan', 'ديالى': 'Diyala', 'القادسية': 'Al-Qādisiyyah',
+            'واسط': 'Wasit', 'السليمانية': 'Sulaymaniyah', 'دهوك': 'Duhok', 'كركوك': 'Kirkuk',
+            'المثنى': 'Muthanna', 'حلبجة': 'Halabja', 'صلاح الدين': 'Saladin'
+        };
+        const CASE_MAP = {
+            'اورثو': 'Ortho', 'بيدو': 'Pedo', 'مدسن': 'Medicine',
+            'بروس': 'Pros', 'بريو': 'Perio', 'اوبرتف': 'Operative', 'اكزو': 'Exo'
+        };
+        const DAY_MAP = {
+            'السبت': 'Saturday', 'الأحد': 'Sunday', 'الاثنين': 'Monday',
+            'الثلاثاء': 'Tuesday', 'الأربعاء': 'Wednesday', 'الخميس': 'Thursday', 'الجمعة': 'Friday'
+        };
+
+        // Name & Phone
         document.getElementById('patient-name').value = p.name || '';
         const phonesContainer = document.getElementById('phone-numbers-container');
-        phonesContainer.innerHTML = '';
-        if (p.phone) {
-            const div = document.createElement('div');
-            div.className = 'flex gap-2';
-            div.innerHTML = `
-                <input type="tel" class="patient-phone flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" value="${p.phone}">
-                <button type="button" onclick="addPhoneInput()" class="px-4 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition-colors"><i class="fa-solid fa-plus"></i></button>
+        if (phonesContainer) {
+            phonesContainer.innerHTML = `
+                <div class="flex gap-2">
+                    <input type="tel" class="patient-phone flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" value="${p.phone || ''}" placeholder="Phone Number (Optional)">
+                    <button type="button" onclick="addPhoneInput()" class="px-4 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition-colors"><i class="fa-solid fa-plus"></i></button>
+                </div>
             `;
-            phonesContainer.appendChild(div);
-        } else {
-            addPhoneInput();
         }
 
-        // Location Mapping
-        if (p.province && MAP_GOV[p.province]) {
-            document.getElementById('patient-gov').value = MAP_GOV[p.province];
+        // Governorate Mapping (Arabic → English)
+        if (p.province) {
+            const engGov = GOV_MAP[p.province] || p.province;
+            document.getElementById('patient-gov').value = engGov;
         }
 
-        // Case Mapping (Checkboxes)
+        // City
+        document.getElementById('patient-city').value = p.city || '';
+
+        // Case Mapping (Arabic → English)
         const caseInputs = document.querySelectorAll('input[name="patient-case"]');
-        caseInputs.forEach(input => input.checked = false); // Reset
-        if (p.cases && p.cases.length > 0) {
+        caseInputs.forEach(input => input.checked = false);
+        if (p.cases && Array.isArray(p.cases)) {
             p.cases.forEach(c => {
-                if (MAP_CASE[c]) {
-                    const target = Array.from(caseInputs).find(input => input.value === MAP_CASE[c]);
-                    if (target) target.checked = true;
-                }
+                const engCase = CASE_MAP[c] || c;
+                const target = Array.from(caseInputs).find(input => input.value === engCase);
+                if (target) target.checked = true;
             });
         }
 
-        // Days Mapping
+        // Days Mapping (Arabic → English)
         const dayInputs = document.querySelectorAll('input[name="patient-days"]');
-        dayInputs.forEach(input => input.checked = false); // Reset
-        if (p.day && MAP_DAY[p.day]) {
-            const target = Array.from(dayInputs).find(input => input.value === MAP_DAY[p.day]);
-            if (target) target.checked = true;
+        dayInputs.forEach(input => input.checked = false);
+        if (p.days && Array.isArray(p.days)) {
+            const allDaysAr = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+            if (p.days.length === allDaysAr.length) {
+                // All days selected → check "All Days"
+                const allDaysInput = Array.from(dayInputs).find(input => input.value === 'All Days');
+                if (allDaysInput) allDaysInput.checked = true;
+            } else {
+                p.days.forEach(d => {
+                    const engDay = DAY_MAP[d] || d;
+                    const target = Array.from(dayInputs).find(input => input.value === engDay);
+                    if (target) target.checked = true;
+                });
+            }
         }
 
         // Images
-        importedImageUrls = p.imageUrls || [];
+        importedImageUrls = p.images || p.imageUrls || [];
         updateImportedImagesPreview();
 
         // Notes
-        document.getElementById('patient-notes').value = `[Imported from PDF Page #${index + 1}]\n${p.notes || ''}`;
+        document.getElementById('patient-notes').value = p.notes || '';
 
-        // Close import modal and alert success
+        // Close import modal
         const importModal = document.getElementById('import-pdf-modal');
         if (importModal) importModal.remove();
 
@@ -735,11 +762,12 @@ window.importPatientData = function (index) {
         currentStep = 4;
         updateWizardUI();
 
-        alert(`Data for ${p.name || 'Unnamed'} imported successfully! Please review and save.`);
+        if (typeof showToast === 'function') {
+            showToast(`تم استيراد بيانات ${p.name || 'المريض'} بنجاح!`, "success");
+        }
 
     } catch (e) {
-        console.error("Import failed:", e);
-        alert("Failed to import data.");
+        console.error("Import warning (non-critical):", e);
     }
 };
 
@@ -747,32 +775,42 @@ window.updateImportedImagesPreview = function () {
     const existingPreview = document.getElementById('imported-images-preview');
     if (existingPreview) existingPreview.remove();
 
-    if (importedImageUrls.length === 0) return;
+    const fileInput = document.getElementById('patient-image');
+    if (!fileInput) return;
+
+    // Show file input again if no imported images
+    if (importedImageUrls.length === 0) {
+        fileInput.style.display = '';
+        return;
+    }
+
+    // Hide the file input since we already have images
+    fileInput.style.display = 'none';
 
     const container = document.createElement('div');
     container.id = 'imported-images-preview';
-    container.className = 'mt-4 p-4 bg-rose-50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/30';
+    container.className = 'mt-2';
     container.innerHTML = `
-        <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-images"></i>
-            <span>Imported Images (${importedImageUrls.length})</span>
+        <p class="text-xs font-bold text-green-600 dark:text-green-400 mb-2 flex items-center gap-1">
+            <i class="fa-solid fa-check-circle"></i>
+            تم استيراد ${importedImageUrls.length} صورة بنجاح — جاهزة للحفظ
         </p>
-        <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+        <div class="grid grid-cols-3 gap-2">
             ${importedImageUrls.map((url, idx) => `
-                <div class="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white dark:border-zinc-800 shadow-sm flex-shrink-0 group">
+                <div class="relative rounded-xl overflow-hidden border-2 border-gray-200 dark:border-zinc-600 shadow-sm group aspect-square">
                     <img src="${url}" class="w-full h-full object-cover">
-                    <button type="button" onclick="importedImageUrls.splice(${idx}, 1); updateImportedImagesPreview();" class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button type="button" onclick="importedImageUrls.splice(${idx}, 1); updateImportedImagesPreview();" class="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity shadow">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             `).join('')}
         </div>
+        <button type="button" onclick="document.getElementById('patient-image').style.display=''; document.getElementById('patient-image').click();" class="mt-2 text-xs text-blue-500 hover:text-blue-700 font-bold">
+            <i class="fa-solid fa-plus"></i> إضافة صور إضافية
+        </button>
     `;
 
-    const fileInput = document.getElementById('patient-image');
-    if (fileInput) {
-        fileInput.parentElement.appendChild(container);
-    }
+    fileInput.insertAdjacentElement('afterend', container);
 };
 
 // -----------------------------------------------------
@@ -911,9 +949,9 @@ function ensureEditModalExists() {
     });
 }
 
-window.editPatient = async function(patientId) {
+window.editPatient = async function (patientId) {
     ensureEditModalExists();
-    
+
     try {
         const doc = await firebase.firestore().collection('patients').doc(patientId).get();
         if (!doc.exists) {
@@ -922,7 +960,7 @@ window.editPatient = async function(patientId) {
         }
         const data = doc.data();
         window.currentPatientOriginalStatus = data.status || 'Available';
-        
+
         document.getElementById('edit-patient-id').value = patientId;
         document.getElementById('edit-patient-status').value = window.currentPatientOriginalStatus;
         document.getElementById('edit-patient-name').value = data.patientName || '';
@@ -936,7 +974,7 @@ window.editPatient = async function(patientId) {
         const historySection = document.getElementById('edit-history-section');
         const historyList = document.getElementById('edit-history-list');
         const history = [...(data.history || [])];
-        
+
         // If it was booked by someone, add that as the initial "Booking" event
         if (data.bookedBy) {
             const bookedByName = await getTelegramUserName(data.bookedBy);
@@ -948,12 +986,12 @@ window.editPatient = async function(patientId) {
                 from: 'Available'
             });
         }
-        
+
         if (history.length > 0) {
             historySection.classList.remove('hidden');
             historyList.classList.add('hidden');
             document.getElementById('history-chevron').classList.remove('rotate-180');
-            
+
             // Sort by date newest first
             const sortedHistory = history.sort((a, b) => {
                 const dateA = a.at ? (a.at.toDate ? a.at.toDate() : new Date(a.at)) : new Date(0);
@@ -963,7 +1001,7 @@ window.editPatient = async function(patientId) {
 
             historyList.innerHTML = sortedHistory.map(h => {
                 const date = h.at ? (h.at.toDate ? h.at.toDate() : new Date(h.at)).toLocaleString('ar-EG') : 'N/A';
-                
+
                 if (h.isBooking) {
                     return `
                         <div class="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-100 dark:border-emerald-800 text-[10px]">
@@ -995,12 +1033,12 @@ window.editPatient = async function(patientId) {
         } else {
             historySection.classList.add('hidden');
         }
-        
+
         // Images List
         const imagesList = document.getElementById('edit-images-list');
         const currentImages = data.imageUrls || (data.imageUrl ? [data.imageUrl] : []);
         imagesList.innerHTML = '';
-        
+
         if (currentImages.length > 0) {
             currentImages.forEach((url, idx) => {
                 const div = document.createElement('div');
@@ -1016,7 +1054,7 @@ window.editPatient = async function(patientId) {
             imagesList.innerHTML = '<p class="col-span-3 text-xs text-gray-400 italic">No images attached</p>';
         }
         document.getElementById('edit-patient-image').value = '';
-        
+
         // Cases Checkboxes
         const allCases = ['Ortho', 'Medicine', 'Pedo', 'Pros', 'Perio', 'Operative', 'Exo'];
         const patientCases = data.caseTypes || [];
@@ -1036,13 +1074,13 @@ window.editPatient = async function(patientId) {
                 <span>${d === 'All Days' ? 'Any Day' : d}</span>
             </label>
         `).join('');
-        
-        window.handleEditDaySelection = function(el) {
+
+        window.handleEditDaySelection = function (el) {
             const checkboxes = document.querySelectorAll('input[name="edit-day"]');
             if (el.value === "All Days" && el.checked) {
-                checkboxes.forEach(cb => { if(cb.value !== "All Days") cb.checked = false; });
+                checkboxes.forEach(cb => { if (cb.value !== "All Days") cb.checked = false; });
             } else if (el.checked) {
-                checkboxes.forEach(cb => { if(cb.value === "All Days") cb.checked = false; });
+                checkboxes.forEach(cb => { if (cb.value === "All Days") cb.checked = false; });
             }
         };
 
@@ -1063,18 +1101,18 @@ window.editPatient = async function(patientId) {
     }
 }
 
-window.closePatientInfoModal = function() {
+window.closePatientInfoModal = function () {
     const modal = document.getElementById('patient-info-modal');
     if (modal) modal.classList.add('hidden');
     window.resetAdvancedFilter(); // Reset filters when closing
 }
 
-window.closeEditPatientModal = function() {
+window.closeEditPatientModal = function () {
     const modal = document.getElementById('edit-patient-modal');
     if (modal) modal.classList.add('hidden');
 }
 
-window.addEditPhoneInput = function(val = '') {
+window.addEditPhoneInput = function (val = '') {
     const container = document.getElementById('edit-phones-container');
     const div = document.createElement('div');
     div.className = 'flex gap-2';
@@ -1085,13 +1123,13 @@ window.addEditPhoneInput = function(val = '') {
     container.appendChild(div);
 }
 
-window.saveEditedPatient = async function() {
+window.saveEditedPatient = async function () {
     const btn = document.getElementById('edit-save-btn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
 
     const patientId = document.getElementById('edit-patient-id').value;
-    
+
     const cases = Array.from(document.querySelectorAll('input[name="edit-case"]:checked')).map(el => el.value);
     if (cases.length === 0) {
         alert('Please select at least one Case.');
@@ -1099,13 +1137,13 @@ window.saveEditedPatient = async function() {
         btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> Save Changes';
         return;
     }
-    
+
     const days = Array.from(document.querySelectorAll('input[name="edit-day"]:checked')).map(el => el.value).join(', ');
     const phones = Array.from(document.querySelectorAll('.edit-patient-phone')).map(el => el.value.trim()).filter(val => val !== '');
 
     try {
         const docRef = firebase.firestore().collection('patients').doc(patientId);
-        
+
         // Get existing images from the UI (those that weren't removed)
         const existingImages = Array.from(document.querySelectorAll('#edit-images-list div')).map(el => el.dataset.url).filter(url => url);
         let finalImageUrls = [...existingImages];
@@ -1118,7 +1156,7 @@ window.saveEditedPatient = async function() {
                 formData.append('file', newFiles[i]);
                 formData.append('upload_preset', 'patient');
                 formData.append('folder', 'patients');
-                
+
                 const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/dpda74vzy/image/upload', {
                     method: 'POST',
                     body: formData
@@ -1153,7 +1191,7 @@ window.saveEditedPatient = async function() {
         const newStatus = document.getElementById('edit-patient-status').value;
         if (newStatus !== window.currentPatientOriginalStatus) {
             updatedData.hideBookingOnCard = true;
-            
+
             // Add to history
             updatedData.history = firebase.firestore.FieldValue.arrayUnion({
                 from: window.currentPatientOriginalStatus,
@@ -1174,11 +1212,11 @@ window.saveEditedPatient = async function() {
     }
 }
 
-window.togglePatientHistory = function() {
+window.togglePatientHistory = function () {
     const list = document.getElementById('edit-history-list');
     const chevron = document.getElementById('history-chevron');
     const isHidden = list.classList.contains('hidden');
-    
+
     if (isHidden) {
         list.classList.remove('hidden');
         chevron.classList.add('rotate-180');
@@ -1188,29 +1226,29 @@ window.togglePatientHistory = function() {
     }
 }
 
-window.deletePatient = async function() {
+window.deletePatient = async function () {
     const patientId = document.getElementById('edit-patient-id').value;
     if (!confirm('Are you absolutely sure you want to delete this patient? This cannot be undone.')) return;
-    
+
     try {
         const doc = await firebase.firestore().collection('patients').doc(patientId).get();
         const data = doc.data();
         const patientName = data ? (data.patientName || 'بدون اسم') : 'Unknown';
 
         await firebase.firestore().collection('patients').doc(patientId).delete();
-        
+
         // Log event
         if (window.logSystemEvent) {
             await window.logSystemEvent('delete_patient', `قام بحذف مريض: ${patientName}`);
         }
-        
+
         closeEditPatientModal();
     } catch (err) {
         console.error(err);
         alert('Error deleting patient: ' + err.message);
     }
 }
-window.removeImageFromEdit = function(idx) {
+window.removeImageFromEdit = function (idx) {
     const list = document.getElementById('edit-images-list');
     const items = list.querySelectorAll('div');
     if (items[idx]) {
