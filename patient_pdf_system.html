@@ -285,9 +285,6 @@
             outline: none;
             transition: 0.2s;
             color: #334155;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: left 12px center;
         }
 
         .chip-group {
@@ -639,22 +636,79 @@
                 display: none;
                 font-size: 12px;
             }
+
+            /* Edit Mode Navigation Lock */
+            .toolbar.editing-active {
+                display: none !important;
+            }
+
+            .viewport.editing-active {
+                padding-top: 0;
+                background: #fff;
+            }
+
+            .viewport.editing-active .page-container:not(.is-editing) {
+                display: none !important;
+            }
+
+            .viewport.editing-active .page-container.is-editing {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .viewport.editing-active .page-modes-wrapper {
+                padding: 20px 15px;
+            }
+
+            /* Improved Action Overlay for Mobile */
+            .action-overlay {
+                top: 10px;
+                right: 10px;
+                left: auto;
+            }
+
+            .toolbar.editing-active {
+                display: flex !important;
+                background: #f8fafc;
+                border-bottom: 2px solid var(--accent-color);
+            }
+
+            .toolbar.editing-active .normal-actions {
+                display: none !important;
+            }
+
+            .toolbar-group.edit-actions {
+                display: none;
+                width: 100%;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .toolbar.editing-active .edit-actions {
+                display: flex !important;
+            }
     </style>
 </head>
 
 <body>
 
     <div class="toolbar no-print">
-        <div class="toolbar-group">
+        <div class="toolbar-group normal-actions">
             <button class="btn btn-secondary" onclick="toggleSidebar()" style="padding: 8px 12px;">☰</button>
             <button class="btn btn-secondary" onclick="handleBackButtonClick()" title="العودة">
                 <i class="fa-solid fa-arrow-right"></i> <span class="hide-mobile">العودة</span>
             </button>
             <h2 class="toolbar-title">سجل المرضى</h2>
         </div>
-        <div class="toolbar-group">
+        <div class="toolbar-group normal-actions">
             <div class="page-indicator" id="pageInfo">1 / 1</div>
             <button id="addPageBtn" class="btn btn-primary" onclick="addNewPage()">+ إضافة</button>
+        </div>
+        
+        <div class="toolbar-group edit-actions" id="editToolbarGroup">
+            <!-- Populated by JS -->
         </div>
     </div>
 
@@ -715,6 +769,10 @@
                         if (!p.images) p.images = [];
                         return p;
                     });
+                    
+                    // Cleanup: Remove empty unsaved drafts on load
+                    pages = pages.filter((p, i) => p.isSaved || !isPageEmpty(i));
+                    
                     lastSavedPages = JSON.parse(JSON.stringify(pages));
                 } catch (e) { pages = []; }
             }
@@ -805,11 +863,52 @@
 
         function renderAllPages() {
             const viewport = document.getElementById('viewport');
+            const toolbar = document.querySelector('.toolbar');
+            const editToolbarGroup = document.getElementById('editToolbarGroup');
+            const jumpBtn = document.getElementById('jumpBtn');
             viewport.innerHTML = '';
+
+            const editingIdx = pages.findIndex(p => p.isEditMode);
+            const isAnyEditing = editingIdx > -1;
+            
+            if (isAnyEditing) {
+                toolbar.classList.add('editing-active');
+                viewport.classList.add('editing-active');
+                if (jumpBtn) jumpBtn.style.display = 'none';
+                document.getElementById('sidebar').classList.add('hidden');
+                
+                // Update Edit Toolbar
+                const isExisting = pages[editingIdx].isSaved;
+                editToolbarGroup.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        ${isExisting ? 
+                            `<button class="btn btn-secondary" onclick="cancelEdit(${editingIdx})" style="background:#f1f5f9; color:#475569; border:none">
+                                <i class="fa-solid fa-rotate-left"></i> إلغاء
+                            </button>` :
+                            `<button class="btn btn-secondary" onclick="deletePage(${editingIdx})" style="background:#fee2e2; color:#ef4444; border:none">
+                                <i class="fa-solid fa-trash"></i> حذف
+                            </button>`
+                        }
+                    </div>
+                    <div class="flex items-center gap-2">
+                         <span style="font-weight:bold; font-size:14px; color:var(--primary-color)">
+                            ${isExisting ? 'تعديل السجل' : 'إضافة سجل جديد'}
+                         </span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-primary" onclick="savePage(${editingIdx})" style="background:var(--success-color); padding: 8px 20px;">
+                            <i class="fa-solid fa-check"></i> حفظ
+                        </button>
+                    </div>
+                `;
+            } else {
+                toolbar.classList.remove('editing-active');
+                viewport.classList.remove('editing-active');
+            }
 
             pages.forEach((page, index) => {
                 const pageEl = document.createElement('div');
-                pageEl.className = 'page-container';
+                pageEl.className = `page-container ${page.isEditMode ? 'is-editing' : ''}`;
                 pageEl.id = `page-${index}`;
 
                 const isEmpty = isPageEmpty(index);
@@ -819,16 +918,24 @@
                 pageEl.innerHTML = `
                     <div class="action-overlay no-print">
                         ${!page.isEditMode ?
-                        `<button class="btn btn-edit-small" onclick="setEditMode(${index}, true)">✏️ تعديل</button>` :
-                        `<button id="save-btn-${index}" class="btn btn-save-small" onclick="savePage(${index})">💾 حفظ</button>`
-
+                        `<button class="btn btn-edit-small" onclick="setEditMode(${index}, true)">✏️ تعديل</button>
+                         <button class="btn btn-danger btn-small" onclick="deletePage(${index})" title="حذف" style="background:#fee2e2; color:#ef4444; border:none">🗑</button>` :
+                        ''
                     }
-                        <button class="btn btn-danger btn-small" onclick="deletePage(${index})" title="حذف">🗑</button>
                     </div>
                     
                     <div class="page-modes-wrapper">
                         <div class="edit-mode ${page.isEditMode ? 'active-mode' : ''}">
-                            <h2 style="margin-bottom:20px; font-weight:900; font-size:18px">تعديل البيانات</h2>
+                            ${page.isSaved ? `
+                            <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 4px 12px; border-radius: 8px; border: 1px solid #e2e8f0; width: fit-content;">
+                                    <span style="font-size: 12px; font-weight: 700; color: #64748b;">رقم الصفحة:</span>
+                                    <select onchange="swapPage(${index}, parseInt(this.value) - 1)" style="border: none; background: transparent; font-weight: 900; color: var(--accent-color); cursor: pointer; outline: none; font-size: 14px;">
+                                        ${pages.map((_, i) => `<option value="${i + 1}" ${i === index ? 'selected' : ''}>${i + 1}</option>`).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                            ` : ''}
                             <div class="form-row">
                                 <div class="form-group"><label>الاسم</label><input type="text" class="field-box" value="${page.name}" oninput="updateData(${index}, 'name', this.value)"></div>
                                 <div class="form-group"><label>الهاتف</label><input type="text" class="field-box" value="${page.phone}" oninput="updateData(${index}, 'phone', this.value)"></div>
@@ -929,6 +1036,7 @@
             const saveBtn = document.getElementById(`save-btn-${idx}`);
             if (saveBtn) saveBtn.disabled = false;
 
+            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
             renderThumbnails();
         }
 
@@ -938,6 +1046,7 @@
             const index = arr.indexOf(val);
             if (index > -1) arr.splice(index, 1);
             else arr.push(val);
+            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
             renderAllPages();
         }
 
@@ -945,17 +1054,32 @@
             if (!pages[pIdx]) return;
             if (pages[pIdx].days.length === DAYS.length) pages[pIdx].days = [];
             else pages[pIdx].days = [...DAYS];
+            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
             renderAllPages();
         }
 
         function savePage(idx) {
+            if (isPageEmpty(idx)) {
+                showToast("لا يمكن حفظ سجل فارغ. يرجى إدخال بيانات أو حذف الصفحة.");
+                return;
+            }
             pages[idx].isSaved = true;
             pages[idx].isEditMode = false;
+            isAddingNewPage = false;
             localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
 
             lastSavedPages = JSON.parse(JSON.stringify(pages));
             renderAllPages();
             showToast("تم الحفظ!");
+        }
+
+        function cancelEdit(idx) {
+            if (lastSavedPages[idx]) {
+                pages[idx] = JSON.parse(JSON.stringify(lastSavedPages[idx]));
+            }
+            pages[idx].isEditMode = false;
+            renderAllPages();
+            showToast("تم تجاهل التعديلات");
         }
 
         function setEditMode(idx, mode) {
@@ -1003,11 +1127,37 @@
         function deletePage(idx) {
             if (pages.length <= 1) return;
             if (confirm("حذف السجل؟")) {
+                const wasEditing = pages[idx].isEditMode;
                 pages.splice(idx, 1);
+                if (wasEditing) isAddingNewPage = false;
                 localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
                 lastSavedPages = JSON.parse(JSON.stringify(pages));
                 renderAllPages();
             }
+        }
+
+        function swapPage(currentIndex, targetIndex) {
+            if (targetIndex < 0 || targetIndex >= pages.length || targetIndex === currentIndex) return;
+            
+            // Swap in array
+            const temp = pages[currentIndex];
+            pages[currentIndex] = pages[targetIndex];
+            pages[targetIndex] = temp;
+            
+            // Sync lastSavedPages to match new order
+            const tempSaved = lastSavedPages[currentIndex];
+            lastSavedPages[currentIndex] = lastSavedPages[targetIndex];
+            lastSavedPages[targetIndex] = tempSaved;
+
+            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+            renderAllPages();
+            
+            showToast(`تم تبديل الصفحة ${currentIndex + 1} مع ${targetIndex + 1}`);
+            
+            setTimeout(() => {
+                const el = document.getElementById(`page-${targetIndex}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
         }
 
         window.addNewPage = function () {
@@ -1026,7 +1176,8 @@
             isAddingNewPage = true;
             const newPage = createNewPageData();
             pages.push(newPage);
-            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+            // Remove immediate save to localStorage for empty page
+            // localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
             lastSavedPages[pages.length - 1] = JSON.parse(JSON.stringify(newPage));
             renderAllPages();
             setTimeout(() => { const el = document.getElementById(`page-${pages.length - 1}`); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
@@ -1117,6 +1268,8 @@
         function setupScrollSpy() {
             const viewport = document.getElementById('viewport');
             viewport.onscroll = () => {
+                if (pages.some(p => p.isEditMode)) return;
+                
                 const children = viewport.children;
                 let active = 0;
                 for (let i = 0; i < children.length; i++) {
