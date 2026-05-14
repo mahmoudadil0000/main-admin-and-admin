@@ -68,11 +68,6 @@
         </div>
     </nav>
 
-    <!-- Debug Badge (Optional, but very helpful) -->
-    <div id="debug-role-badge"
-        class="fixed top-20 right-4 z-[9999] px-3 py-1 bg-black/80 text-white text-[10px] font-black rounded-full pointer-events-none uppercase tracking-tighter">
-        Loading Role...
-    </div>
 
     <!-- Main Content Grid -->
     <main class="p-4 md:p-8 max-w-5xl mx-auto flex-1 w-full">
@@ -94,12 +89,23 @@
             <div id="card-view-patients" onclick="openPatientInfoModal()"
                 class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full hidden">
                 <div
-                    class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 text-xl">
+                    class="relative w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 text-xl">
+                    <div id="badge-patients-all" class="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-blue-600/40">0</div>
                     <i class="fa-solid fa-notes-medical"></i>
                 </div>
                 <h2 class="font-bold text-sm md:text-base mb-1" data-i18n="patient-info">Patient Info</h2>
-                <p class="text-xs text-gray-500 dark:text-gray-400 hidden md:block" data-i18n="patient-info-desc">Manage
-                    patient statuses</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 hidden md:block mb-3" data-i18n="patient-info-desc">Manage patient statuses</p>
+                <div class="flex gap-1.5 text-[10px] font-black">
+                    <div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400" title="Available">
+                        <span id="badge-patients-available">0</span>
+                    </div>
+                    <div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400" title="Pending">
+                        <span id="badge-patients-pending">0</span>
+                    </div>
+                    <div class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400" title="Used">
+                        <span id="badge-patients-used">0</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Telegram Users Card -->
@@ -389,8 +395,8 @@
 
                             <div class="relative">
                                 <label class="block font-bold mb-1 text-sm text-gray-600 dark:text-gray-400">Patient
-                                    Price (سعر المريض)</label>
-                                <input type="number" id="patient-price" placeholder="e.g. 25000"
+                                    Price (IQD)</label>
+                                <input type="number" id="patient-price" placeholder="مثال: 25000"
                                     class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold text-green-600">
                             </div>
                         </div>
@@ -865,9 +871,6 @@
                         return;
                     }
 
-                    // 2. Debug Badge
-                    const badge = document.getElementById('debug-role-badge');
-                    if (badge) badge.innerText = "ROLE: ADMIN";
 
                     // 3. UI Gating
                     enforcePermissionsUI();
