@@ -39,11 +39,11 @@ const addAdminForm = document.getElementById('add-admin-form');
 // View list of all admins
 function loadAdmins() {
     adminListBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Loading...</td></tr>';
-    
+
     // Fetch all users with role 'admin' or 'customer'
     db.collection('users').where('role', 'in', ['admin', 'customer']).onSnapshot((snapshot) => {
         adminListBody.innerHTML = '';
-        
+
         if (snapshot.empty) {
             adminListBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">No admin accounts found.</td></tr>';
             return;
@@ -52,11 +52,11 @@ function loadAdmins() {
         snapshot.forEach((doc) => {
             const admin = doc.data();
             const id = doc.id;
-            
+
             const tr = document.createElement('tr');
             tr.className = 'border-b border-gray-100 dark:border-zinc-800 last:border-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer';
             tr.onclick = () => openEditAdmin(id, admin.username, admin.email);
-            
+
             tr.innerHTML = `
                 <td class="px-4 py-4 font-bold text-blue-600 dark:text-blue-400 flex items-center justify-between">
                     <span>${admin.username || 'N/A'}</span>
@@ -79,13 +79,13 @@ const secondaryApp = firebase.apps.find(app => app.name === "SecondaryApp") || f
 // Create new admin
 addAdminForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const username = document.getElementById('new-admin-username').value.trim();
     const email = document.getElementById('new-admin-email').value.trim();
     const password = document.getElementById('new-admin-password').value;
     const role = document.getElementById('new-account-role').value;
     const submitBtn = addAdminForm.querySelector('button[type="submit"]');
-    
+
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Creating...';
 
@@ -108,7 +108,7 @@ addAdminForm.addEventListener('submit', async (e) => {
                 throw authError; // Throw other errors normally
             }
         }
-        
+
         // Log out the secondary app immediately
         await secondaryApp.auth().signOut();
 
@@ -137,19 +137,19 @@ addAdminForm.addEventListener('submit', async (e) => {
 const editAdminModal = document.getElementById('edit-admin-modal');
 const editAdminForm = document.getElementById('edit-admin-form');
 
-window.openEditAdmin = function(id, username, email) {
+window.openEditAdmin = function (id, username, email) {
     document.getElementById('edit-admin-id').value = id;
     document.getElementById('edit-admin-username').value = username || '';
     document.getElementById('edit-admin-email').value = email || '';
     document.getElementById('edit-admin-password').value = '';
-    
+
     // Load this admin's activity
     loadAdminActivity(id);
-    
+
     editAdminModal.classList.remove('hidden');
 }
 
-window.closeEditAdmin = function() {
+window.closeEditAdmin = function () {
     editAdminModal.classList.add('hidden');
 }
 
@@ -163,12 +163,12 @@ editAdminForm.addEventListener('submit', async (e) => {
     const newUsername = document.getElementById('edit-admin-username').value.trim();
     const newPassword = document.getElementById('edit-admin-password').value;
     const email = document.getElementById('edit-admin-email').value;
-    
+
     try {
         await db.collection('users').doc(id).update({
             username: newUsername
         });
-        
+
         if (newPassword) {
             alert(`Username updated!\n\n⚠️ NOTE ON PASSWORD: To securely update another user's password (${email}), you need Firebase Cloud Functions. A frontend web app is not allowed to force-change another user's password for security reasons.`);
         } else {
@@ -181,10 +181,10 @@ editAdminForm.addEventListener('submit', async (e) => {
     }
 });
 
-window.deleteCurrentAdmin = async function() {
+window.deleteCurrentAdmin = async function () {
     const id = document.getElementById('edit-admin-id').value;
     const email = document.getElementById('edit-admin-email').value;
-    
+
     if (confirm(`Are you absolutely sure you want to completely delete ${email}?`)) {
         try {
             await db.collection('users').doc(id).delete();
@@ -221,7 +221,7 @@ async function loadGlobalActivity() {
             .orderBy('createdAt', 'desc')
             .limit(100)
             .get();
-        
+
         list.innerHTML = '';
         if (snapshot.empty) {
             list.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold">لا يوجد نشاط مسجل حالياً.</div>';
@@ -231,10 +231,10 @@ async function loadGlobalActivity() {
         snapshot.forEach(doc => {
             const log = doc.data();
             const dateStr = log.createdAt ? log.createdAt.toDate().toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '...';
-            
+
             let icon = 'fa-circle-info';
             let color = 'text-blue-500';
-            
+
             if (log.type === 'add_patient') { icon = 'fa-user-plus'; color = 'text-green-500'; }
             else if (log.type === 'delete_patient') { icon = 'fa-trash-can'; color = 'text-red-500'; }
             else if (log.type === 'balance_update') { icon = 'fa-money-bill-transfer'; color = 'text-amber-500'; }
@@ -268,16 +268,16 @@ async function loadGlobalActivity() {
 async function loadAdminActivity(adminUid) {
     const logContainer = document.getElementById('admin-activity-log');
     if (!logContainer) return;
-    
+
     logContainer.innerHTML = '<p class="text-[10px] text-gray-500 animate-pulse">جاري تحميل النشاط...</p>';
-    
+
     try {
         // Removed .orderBy() to avoid mandatory composite indexes in Firestore
         const snapshot = await db.collection('system_logs')
             .where('userId', '==', adminUid)
             .limit(50)
             .get();
-            
+
         let logs = [];
         snapshot.forEach(doc => {
             logs.push({ id: doc.id, ...doc.data() });
@@ -291,7 +291,7 @@ async function loadAdminActivity(adminUid) {
         });
 
         logContainer.innerHTML = '';
-        
+
         if (logs.length === 0) {
             logContainer.innerHTML = '<p class="text-[10px] text-gray-400 italic">لا يوجد نشاط مسجل لهذا الحساب حالياً.</p>';
             return;
@@ -299,10 +299,10 @@ async function loadAdminActivity(adminUid) {
 
         logs.forEach(log => {
             const dateStr = log.createdAt ? (log.createdAt.toDate ? log.createdAt.toDate() : new Date(log.createdAt)).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '...';
-            
+
             let icon = 'fa-circle-info';
             let color = 'text-blue-500';
-            
+
             if (log.type === 'add_patient') { icon = 'fa-user-plus'; color = 'text-green-500'; }
             else if (log.type === 'delete_patient') { icon = 'fa-trash-can'; color = 'text-red-500'; }
             else if (log.type === 'balance_update') { icon = 'fa-money-bill-transfer'; color = 'text-amber-500'; }
@@ -389,9 +389,9 @@ async function markAsRead(sectionId) {
 
     // 1. Instant UI update
     optimisticSeen[sectionId] = true;
-    const badgeId = sectionId === 'system-activity' ? 'badge-system-activity' : 
-                    sectionId === 'telegram-users' ? 'badge-telegram-users' : 
-                    sectionId === 'manage-admins' ? 'badge-manage-admins' : `badge-user-${sectionId.replace('user_', '')}`;
+    const badgeId = sectionId === 'system-activity' ? 'badge-system-activity' :
+        sectionId === 'telegram-users' ? 'badge-telegram-users' :
+            sectionId === 'manage-admins' ? 'badge-manage-admins' : `badge-user-${sectionId.replace('user_', '')}`;
     const badge = document.getElementById(badgeId);
     if (badge) badge.classList.add('hidden');
 
@@ -410,7 +410,7 @@ async function markAsRead(sectionId) {
                 throw err;
             }
         });
-        
+
         console.log(`Marked ${sectionId} as read successfully`);
     } catch (err) {
         console.error("Error marking as read:", err);
@@ -441,7 +441,7 @@ function updateNotificationBadges() {
     db.collection('users').doc(user.uid).onSnapshot(userDoc => {
         if (userDoc.exists) {
             window.currentUserData = userDoc.data(); // Fix for patients.js modal authentication timeout
-            
+
             // SECURITY REDIRECT: if not main_admin, redirect to index
             if (window.currentUserData.role !== 'main_admin') {
                 window.location.href = 'index.html';
@@ -482,7 +482,7 @@ function refreshAllBadges() {
 
     // 2. Telegram Users Badge (Signups + Transactions + Bookings)
     const lastReadTG = getTS('telegram-users');
-    
+
     Promise.all([
         db.collection('telegram_users').where('createdAt', '>', lastReadTG).get(),
         db_telegram.collection('transactions').where('createdAt', '>', lastReadTG).get(),
@@ -511,7 +511,7 @@ function refreshAllBadges() {
 
         // Hide all first
         document.querySelectorAll('[id^="badge-admin-"]').forEach(b => b.classList.add('hidden'));
-        
+
         for (const adminId in adminCounts) {
             const b = document.getElementById(`badge-admin-${adminId}`);
             if (b) {
@@ -528,7 +528,7 @@ function refreshAllBadges() {
 
     // 4. Individual User Badges (Transactions + Patients)
     const db_telegram = firebase.apps.length > 1 ? firebase.app("SecondaryApp").firestore() : db;
-    
+
     // We'll reset all user badges first (to be safe)
     // document.querySelectorAll('[id^="badge-user-"]').forEach(b => b.classList.add('hidden'));
 
@@ -573,4 +573,3 @@ db.collection('telegram_users').onSnapshot(() => refreshAllBadges());
 const db_tg = firebase.apps.length > 1 ? firebase.app("SecondaryApp").firestore() : db;
 db_tg.collection('transactions').onSnapshot(() => refreshAllBadges());
 db_tg.collection('patients').onSnapshot(() => refreshAllBadges());
-
