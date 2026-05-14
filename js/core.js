@@ -2,13 +2,13 @@
  * 1. FIREBASE CONFIG
  * ========================================== */
 const firebaseConfig = {
-  apiKey: "AIzaSyAKevus2EJpkIaHeuR3DTutSgUOzkZunQg",
-  authDomain: "main-admin-and-admin.firebaseapp.com",
-  projectId: "main-admin-and-admin",
-  storageBucket: "main-admin-and-admin.firebasestorage.app",
-  messagingSenderId: "691604476037",
-  appId: "1:691604476037:web:9fe647e73de1ea699e19ec",
-  measurementId: "G-VSHWQWTW21"
+    apiKey: "AIzaSyAKevus2EJpkIaHeuR3DTutSgUOzkZunQg",
+    authDomain: "main-admin-and-admin.firebaseapp.com",
+    projectId: "main-admin-and-admin",
+    storageBucket: "main-admin-and-admin.firebasestorage.app",
+    messagingSenderId: "691604476037",
+    appId: "1:691604476037:web:9fe647e73de1ea699e19ec",
+    measurementId: "G-VSHWQWTW21"
 };
 
 if (!firebase.apps.length) {
@@ -134,7 +134,7 @@ function setLanguage(lang) {
     localStorage.setItem('clinicLang', lang);
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-    
+
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         if (translations[lang][key]) {
@@ -169,7 +169,7 @@ function updateLangBtn() {
     }
 }
 
-window.toggleLanguage = function() {
+window.toggleLanguage = function () {
     setLanguage(currentLang === 'en' ? 'ar' : 'en');
 };
 
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * 3. UTILS
  * ========================================== */
 if (typeof window.currentUserData === 'undefined') {
-    window.currentUserData = null; 
+    window.currentUserData = null;
 }
 
 window.can = function (permission) {
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    if(loginForm) {
+    if (loginForm) {
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const username = usernameInput.value.trim().toLowerCase();
@@ -293,39 +293,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!loginBtn) return;
         if (isLoading) {
             loginBtn.disabled = true;
-            if(btnText) btnText.textContent = 'Logging in...';
-            if(spinner) spinner.classList.remove('hidden');
+            if (btnText) btnText.textContent = 'Logging in...';
+            if (spinner) spinner.classList.remove('hidden');
         } else {
             loginBtn.disabled = false;
-            if(btnText) btnText.textContent = 'Login';
-            if(spinner) spinner.classList.add('hidden');
+            if (btnText) btnText.textContent = 'Login';
+            if (spinner) spinner.classList.add('hidden');
         }
     }
 
     function redirectUser(user) {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-        
+
         if (user.email === 'mahmod.adil2001@gmail.com') {
             if (currentPage !== 'main-admin.html') {
                 window.location.href = 'main-admin.html';
             }
             return;
         }
-        
+
         setLoading(true);
         if (btnText) btnText.textContent = 'Redirecting...';
-        
+
         const database = typeof db !== 'undefined' ? db : firebase.firestore();
         database.collection('users').doc(user.uid).get()
             .then(doc => {
                 if (doc.exists) {
                     const role = doc.data().role;
                     let targetPage = 'admin.html';
-                    
+
                     if (role === 'main_admin') {
                         targetPage = 'main-admin.html';
                     }
-                    
+
                     if (currentPage !== targetPage) {
                         window.location.href = targetPage;
                     } else {
