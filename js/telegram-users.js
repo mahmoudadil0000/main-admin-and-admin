@@ -563,10 +563,10 @@ function loadRechargeRequests() {
                 </div>
 
                 <div class="flex gap-2">
-                    <button onclick="approveRequest('${id}', '${req.telegramId}', ${req.amount})" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-lg shadow-green-500/20">
+                    <button onclick="approveRequest(event, '${id}', '${req.telegramId}', ${req.amount})" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-lg shadow-green-500/20">
                         <i class="fa-solid fa-check mr-1"></i> قبول التعبئة
                     </button>
-                    <button onclick="rejectRequest('${id}')" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-lg shadow-red-500/20">
+                    <button onclick="rejectRequest(event, '${id}')" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-lg font-bold text-sm transition-all active:scale-95 shadow-lg shadow-red-500/20">
                         <i class="fa-solid fa-trash-can mr-1"></i> رفض
                     </button>
                 </div>
@@ -579,16 +579,29 @@ function loadRechargeRequests() {
     });
 }
 
-function approveRequest(requestId, telegramId, amount) {
+function approveRequest(event, requestId, telegramId, amount) {
     if (!confirm(`هل أنت متأكد من قبول الطلب وإضافة مبلغ ${amount.toLocaleString()} د.ع إلى رصيد المستخدم؟`)) return;
 
+    const btn = event.currentTarget;
+    const card = btn.closest('.bg-white');
+    const allButtons = card.querySelectorAll('button');
+    
+    // Disable UI to prevent multiple clicks
+    allButtons.forEach(b => b.disabled = true);
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> جاري القبول...';
+
     const userRef = db_telegram.collection('telegram_users').doc(telegramId);
+    const requestRef = db_telegram.collection('recharge_requests').doc(requestId);
     let newBalance = 0;
 
-    // Use transaction to ensure balance is updated correctly
+    // Use transaction to ensure balance is updated correctly and request is only processed once
     db_telegram.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
-        if (!userDoc.exists) throw "المستخدم غير موجود في النظام!";
+        const requestDoc = await transaction.get(requestRef);
+
+        if (!requestDoc.exists) throw "هذا الطلب تمت معالجته بالفعل أو غير موجود! ❌";
+        if (!userDoc.exists) throw "المستخدم غير موجود في النظام! ❌";
 
         const currentBalance = userDoc.data().balance || 0;
         newBalance = currentBalance + amount;
@@ -612,7 +625,7 @@ function approveRequest(requestId, telegramId, amount) {
         });
 
         // Delete the request after approval
-        transaction.delete(db_telegram.collection('recharge_requests').doc(requestId));
+        transaction.delete(requestRef);
     }).then(async () => {
         // Fetch user data for logging and cleanup
         const userDoc = await userRef.get();
@@ -645,18 +658,31 @@ function approveRequest(requestId, telegramId, amount) {
         alert('✅ تم قبول الطلب وتحديث الرصيد بنجاح.');
     }).catch((error) => {
         console.error("Error approving request: ", error);
-        alert("❌ فشل في قبول الطلب: " + error);
+        alert(error);
+        // Re-enable if failed
+        allButtons.forEach(b => b.disabled = false);
+        btn.innerHTML = originalContent;
     });
 }
 
-function rejectRequest(requestId) {
+function rejectRequest(event, requestId) {
     if (!confirm('هل أنت متأكد من رفض وحذف هذا الطلب؟')) return;
+
+    const btn = event.currentTarget;
+    const card = btn.closest('.bg-white');
+    const allButtons = card.querySelectorAll('button');
+    
+    allButtons.forEach(b => b.disabled = true);
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> جاري الرفض...';
 
     db_telegram.collection('recharge_requests').doc(requestId).delete()
         .then(() => alert('🗑️ تم رفض وحذف الطلب بنجاح.'))
         .catch(err => {
             console.error("Error rejecting request:", err);
             alert('❌ خطأ في حذف الطلب: ' + err);
+            allButtons.forEach(b => b.disabled = false);
+            btn.innerHTML = originalContent;
         });
 }
 
