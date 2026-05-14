@@ -570,6 +570,8 @@ function refreshAllBadges() {
     // CRITICAL: Do not run queries until we have loaded the lastSeen state from Firestore
     if (!user || currentUserLastSeen === null) return;
 
+    const db_telegram = firebase.apps.length > 1 ? firebase.app("SecondaryApp").firestore() : db;
+
     // If no TS exists, assume "everything before now - 1 min" has been seen 
     // to avoid showing the entire history as new.
     const defaultTS = firebase.firestore.Timestamp.fromMillis(Date.now() - 60000);
@@ -633,7 +635,6 @@ function refreshAllBadges() {
     });
 
     // 4. Individual User Badges (Transactions + Patients)
-    const db_telegram = firebase.apps.length > 1 ? firebase.app("SecondaryApp").firestore() : db;
 
     // We'll reset all user badges first (to be safe)
     // document.querySelectorAll('[id^="badge-user-"]').forEach(b => b.classList.add('hidden'));
