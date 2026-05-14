@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +8,13 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      tailwind.config = {
-        darkMode: 'media',
-      }
+        tailwind.config = {
+            darkMode: 'media',
+        }
     </script>
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -21,23 +22,27 @@
     <!-- firebase-config.js MUST load before auth-guard.js to initialize Firebase -->
     <script src="js/core.js"></script>
     <link rel="stylesheet" href="css/style.css">
-    
+
     <style>
         .card-hover {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+
         .card-hover:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
+
         .animate-fade-in-up {
             animation: fadeInUp 0.3s ease-out forwards;
         }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -45,24 +50,29 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-50 dark:bg-zinc-900 text-gray-900 dark:text-gray-100 min-h-screen font-sans">
-    
+
     <main class="p-6 md:p-12 max-w-6xl mx-auto">
         <!-- Dashboard Layout Container -->
         <div class="flex flex-col lg:flex-row-reverse gap-8 items-start">
-            
+
             <!-- Right Section: Header & Controls (Sticky on Desktop) -->
-            <div class="w-full lg:w-1/3 lg:sticky lg:top-12 bg-white dark:bg-zinc-800 rounded-[2.5rem] p-10 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-zinc-700 flex flex-col items-end text-right">
+            <div
+                class="w-full lg:w-1/3 lg:sticky lg:top-12 bg-white dark:bg-zinc-800 rounded-[2.5rem] p-10 shadow-xl shadow-gray-200/50 dark:shadow-none border border-gray-100 dark:border-zinc-700 flex flex-col items-end text-right">
                 <h1 class="text-4xl font-black mb-8 leading-tight tracking-tighter" data-i18n="dashboard-title">
-                    لوحة تحكم<br/>النظام
+                    لوحة تحكم<br />النظام
                 </h1>
-                
+
                 <div class="flex flex-col items-end gap-6 w-full">
-                    <button onclick="toggleLanguage()" id="lang-toggle-btn" class="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 px-8 py-3 rounded-full text-sm font-bold hover:bg-gray-100 transition-all">
+                    <button onclick="toggleLanguage()" id="lang-toggle-btn"
+                        class="bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 px-8 py-3 rounded-full text-sm font-bold hover:bg-gray-100 transition-all">
                         English
                     </button>
-                    
-                    <button id="logout-btn" class="text-red-500 font-black text-lg hover:text-red-700 transition-colors flex items-center gap-2" data-i18n="logout">
+
+                    <button id="logout-btn"
+                        class="text-red-500 font-black text-lg hover:text-red-700 transition-colors flex items-center gap-2"
+                        data-i18n="logout">
                         تسجيل الخروج
                     </button>
                 </div>
@@ -70,53 +80,72 @@
 
             <!-- Left Section: Cards Grid -->
             <div class="w-full lg:w-2/3 grid grid-cols-2 gap-6">
-                
+
                 <!-- Add Patient Card -->
-                <div onclick="openAddPatientModal()" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
-                    <div class="w-16 h-16 rounded-full bg-green-50 dark:bg-green-900/20 text-green-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-green-500 group-hover:text-white transition-all">
+                <div onclick="openAddPatientModal()"
+                    class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div
+                        class="w-16 h-16 rounded-full bg-green-50 dark:bg-green-900/20 text-green-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-green-500 group-hover:text-white transition-all">
                         <i class="fa-solid fa-hospital-user"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base" data-i18n="add-patient">إضافة مريض</h2>
                 </div>
 
                 <!-- Manage Admins Card -->
-                <div onclick="openManageAdmins()" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
-                    <div class="relative w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-500 group-hover:text-white transition-all">
-                        <div id="badge-manage-admins" class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 hidden">0</div>
+                <div onclick="openManageAdmins()"
+                    class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div
+                        class="relative w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-blue-500 group-hover:text-white transition-all">
+                        <div id="badge-manage-admins"
+                            class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 hidden">
+                            0</div>
                         <i class="fa-solid fa-users-gear"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base" data-i18n="manage-admins">إدارة الحسابات</h2>
                 </div>
 
                 <!-- Telegram Users Card -->
-                <div onclick="openTelegramUsersModal()" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
-                    <div class="relative w-16 h-16 rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-sky-500 group-hover:text-white transition-all">
-                        <div id="badge-telegram-users" class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 hidden">0</div>
+                <div onclick="openTelegramUsersModal()"
+                    class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div
+                        class="relative w-16 h-16 rounded-full bg-sky-50 dark:bg-sky-900/20 text-sky-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-sky-500 group-hover:text-white transition-all">
+                        <div id="badge-telegram-users"
+                            class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 hidden">
+                            0</div>
                         <i class="fa-brands fa-telegram"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base" data-i18n="telegram-users">Telegram Users</h2>
                 </div>
 
                 <!-- Patient Info Card -->
-                <div onclick="openPatientInfoModal()" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
-                    <div class="w-16 h-16 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-purple-500 group-hover:text-white transition-all">
+                <div onclick="openPatientInfoModal()"
+                    class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div
+                        class="w-16 h-16 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-purple-500 group-hover:text-white transition-all">
                         <i class="fa-solid fa-notes-medical"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base" data-i18n="patient-info">بيانات المرضى</h2>
                 </div>
 
                 <!-- System Activity Card -->
-                <div onclick="openSystemActivityModal()" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
-                    <div class="relative w-16 h-16 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-orange-500 group-hover:text-white transition-all">
-                        <div id="badge-system-activity" class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 hidden">0</div>
+                <div onclick="openSystemActivityModal()"
+                    class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div
+                        class="relative w-16 h-16 rounded-full bg-orange-50 dark:bg-orange-900/20 text-orange-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-orange-500 group-hover:text-white transition-all">
+                        <div id="badge-system-activity"
+                            class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-red-500/40 hidden">
+                            0</div>
                         <i class="fa-solid fa-list-check"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base" data-i18n="system-activity">System Activity</h2>
                 </div>
 
                 <!-- Patient PDF System Card -->
-                <div id="card-pdf-system" onclick="sessionStorage.setItem('pdf_source', 'main-admin.html'); window.location.href='patient_pdf_system.html'" class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
-                    <div class="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-rose-500 group-hover:text-white transition-all">
+                <div id="card-pdf-system"
+                    onclick="sessionStorage.setItem('pdf_source', 'main-admin.html'); window.location.href='patient_pdf_system.html'"
+                    class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
+                    <div
+                        class="w-16 h-16 rounded-full bg-rose-50 dark:bg-rose-900/20 text-rose-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-rose-500 group-hover:text-white transition-all">
                         <i class="fa-solid fa-file-pdf"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base">Patient PDF System</h2>
@@ -127,33 +156,42 @@
     </main>
 
     <!-- Manage Admins Modal -->
-    <div id="manage-admins-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
-            
+    <div id="manage-admins-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+
             <!-- Modal Header -->
             <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold">Manage Admins</h2>
-                <button onclick="closeManageAdmins()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                <button onclick="closeManageAdmins()"
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
 
             <!-- Modal Body (Scrollable) -->
             <div class="p-6 overflow-y-auto flex-1">
-                
+
                 <!-- Add New Account Form -->
-                <div class="bg-gray-50 dark:bg-zinc-900/50 rounded-xl p-5 mb-8 border border-gray-100 dark:border-zinc-700">
+                <div
+                    class="bg-gray-50 dark:bg-zinc-900/50 rounded-xl p-5 mb-8 border border-gray-100 dark:border-zinc-700">
                     <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-gray-500">Create New Account</h3>
                     <form id="add-admin-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <input type="text" id="new-admin-username" placeholder="Username / Name" required class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <input type="email" id="new-admin-email" placeholder="Email Address" required class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <input type="password" id="new-admin-password" placeholder="Password" required class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                        <select id="new-account-role" required class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <input type="text" id="new-admin-username" placeholder="Username / Name" required
+                            class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <input type="email" id="new-admin-email" placeholder="Email Address" required
+                            class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <input type="password" id="new-admin-password" placeholder="Password" required
+                            class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <select id="new-account-role" required
+                            class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="admin">Admin</option>
                             <option value="customer">Customer</option>
                         </select>
                         <div class="md:col-span-4 flex justify-end mt-2">
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2">
+                            <button type="submit"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2">
                                 <i class="fa-solid fa-plus"></i> Create Account
                             </button>
                         </div>
@@ -163,7 +201,8 @@
                 <!-- Accounts List -->
                 <div>
                     <h3 class="font-bold mb-4 text-sm uppercase tracking-wider text-gray-500">Active Accounts</h3>
-                    <div class="overflow-x-auto bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl">
+                    <div
+                        class="overflow-x-auto bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl">
                         <table class="w-full text-left text-sm whitespace-nowrap">
                             <thead class="text-xs text-gray-500 bg-gray-50 dark:bg-zinc-900/50 uppercase">
                                 <tr>
@@ -184,8 +223,10 @@
     </div>
 
     <!-- Edit Admin Modal -->
-    <div id="edit-admin-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+    <div id="edit-admin-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold">Edit Admin</h2>
                 <button onclick="closeEditAdmin()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
@@ -197,21 +238,27 @@
                     <input type="hidden" id="edit-admin-id">
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
-                        <input type="text" id="edit-admin-username" required class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold text-blue-600 dark:text-blue-400">
+                        <input type="text" id="edit-admin-username" required
+                            class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold text-blue-600 dark:text-blue-400">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
-                        <input type="email" id="edit-admin-email" readonly disabled class="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 text-sm cursor-not-allowed text-gray-500">
+                        <input type="email" id="edit-admin-email" readonly disabled
+                            class="w-full px-4 py-2 rounded-lg bg-gray-100 dark:bg-zinc-700 border border-gray-200 dark:border-zinc-600 text-sm cursor-not-allowed text-gray-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">New Password</label>
-                        <input type="password" id="edit-admin-password" placeholder="******** (Leave blank to keep current)" class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <input type="password" id="edit-admin-password"
+                            placeholder="******** (Leave blank to keep current)"
+                            class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
                     <div class="flex flex-col gap-3 mt-4">
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-lg shadow-blue-600/30">
+                        <button type="submit"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-lg shadow-blue-600/30">
                             Save Changes
                         </button>
-                        <button type="button" onclick="deleteCurrentAdmin()" class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors border border-red-200 dark:border-red-800/50 mt-2">
+                        <button type="button" onclick="deleteCurrentAdmin()"
+                            class="w-full bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-900/30 dark:hover:bg-red-900/50 dark:text-red-400 px-6 py-2.5 rounded-lg font-semibold text-sm transition-colors border border-red-200 dark:border-red-800/50 mt-2">
                             <i class="fa-solid fa-trash-can mr-2"></i> Delete Account
                         </button>
                     </div>
@@ -219,7 +266,8 @@
 
                 <!-- Admin Activity Log (New) -->
                 <div class="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-700">
-                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">النشاط الأخير (Recent Activity)</h3>
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">النشاط الأخير (Recent
+                        Activity)</h3>
                     <div id="admin-activity-log" class="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                         <!-- Populated by JS -->
                         <p class="text-[10px] text-gray-400 italic">جاري تحميل النشاط...</p>
@@ -230,38 +278,51 @@
     </div>
 
     <!-- Add Patient Modal (Wizard) -->
-    <div id="add-patient-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
+    <div id="add-patient-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-2">
                     <h2 class="text-xl font-bold">Add Patient</h2>
-                    <button onclick="openImportPdfModal()" type="button" class="px-3 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-black uppercase tracking-wider border border-rose-100 dark:border-rose-800 hover:bg-rose-100 transition-colors flex items-center gap-1.5">
+                    <button onclick="openImportPdfModal()" type="button"
+                        class="px-3 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-black uppercase tracking-wider border border-rose-100 dark:border-rose-800 hover:bg-rose-100 transition-colors flex items-center gap-1.5">
                         <i class="fa-solid fa-file-import"></i>
                         <span>Import from PDF</span>
                     </button>
                 </div>
-                <button onclick="closeAddPatientModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                <button onclick="closeAddPatientModal()"
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
-            
+
             <div class="p-6 overflow-y-auto">
                 <!-- Step Progress -->
                 <div class="flex justify-between mb-8 relative">
-                    <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-zinc-700 -z-10 transform -translate-y-1/2"></div>
-                    <div class="absolute top-1/2 left-0 h-1 bg-blue-500 -z-10 transform -translate-y-1/2 transition-all duration-300" id="step-progress-bar" style="width: 0%"></div>
-                    
-                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm" id="indicator-1">1</div>
-                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm" id="indicator-2">2</div>
-                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm" id="indicator-3">3</div>
-                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm" id="indicator-4">4</div>
+                    <div
+                        class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 dark:bg-zinc-700 -z-10 transform -translate-y-1/2">
+                    </div>
+                    <div class="absolute top-1/2 left-0 h-1 bg-blue-500 -z-10 transform -translate-y-1/2 transition-all duration-300"
+                        id="step-progress-bar" style="width: 0%"></div>
+
+                    <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm"
+                        id="indicator-1">1</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm"
+                        id="indicator-2">2</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm"
+                        id="indicator-3">3</div>
+                    <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-zinc-700 text-gray-500 flex items-center justify-center font-bold text-sm"
+                        id="indicator-4">4</div>
                 </div>
 
                 <form id="add-patient-form">
                     <!-- Step 1: Governorate -->
                     <div id="step-1" class="step-content block">
                         <h3 class="font-bold mb-4 text-lg">Select Governorate</h3>
-                        <select id="patient-gov" required class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <select id="patient-gov" required
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="" disabled selected>Choose a Governorate...</option>
                             <option value="Baghdad">Baghdad (بغداد)</option>
                             <option value="Basra">Basra (البصرة)</option>
@@ -282,9 +343,10 @@
                             <option value="Muthanna">Muthanna (المثنى)</option>
                             <option value="Halabja">Halabja (حلبجة)</option>
                         </select>
-                        
+
                         <h3 class="font-bold mb-4 mt-6 text-lg">City / Region (المدينة/المنطقة)</h3>
-                        <input type="text" id="patient-city" placeholder="e.g. Karrada, Mansour..." required class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <input type="text" id="patient-city" placeholder="e.g. Karrada, Mansour..." required
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
 
                     <!-- Step 2: Case -->
@@ -293,36 +355,51 @@
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="patient-case" value="Ortho" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Ortho</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Ortho</div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="patient-case" value="Medicine" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Medicine</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Medicine</div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="patient-case" value="Pedo" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Pedo</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Pedo</div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="patient-case" value="Pros" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Pros</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Pros</div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="patient-case" value="Perio" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Perio</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Perio</div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="checkbox" name="patient-case" value="Operative" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Operative</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Operative</div>
                             </label>
                             <label class="cursor-pointer md:col-span-2">
                                 <input type="checkbox" name="patient-case" value="Exo" class="peer sr-only">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Exo</div>
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Exo</div>
                             </label>
                         </div>
-                        
+
                         <h3 class="font-bold mb-4 mt-6 text-lg">Number of Persons (عدد الأشخاص)</h3>
-                        <input type="number" id="patient-persons" min="1" value="1" required class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                        <input type="number" id="patient-persons" min="1" value="1" required
+                            class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
 
                     <!-- Step 3: Clinic Days -->
@@ -330,45 +407,69 @@
                         <h3 class="font-bold mb-4 text-lg">Select Clinic Days</h3>
                         <div class="grid grid-cols-2 gap-3 text-sm">
                             <label class="cursor-pointer md:col-span-2">
-                                <input type="checkbox" name="patient-days" value="All Days" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-bold text-center">All Days (جميع الأيام)</div>
+                                <input type="checkbox" name="patient-days" value="All Days" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-bold text-center">
+                                    All Days (جميع الأيام)</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Sunday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Sunday</div>
+                                <input type="checkbox" name="patient-days" value="Sunday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Sunday</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Monday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Monday</div>
+                                <input type="checkbox" name="patient-days" value="Monday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Monday</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Tuesday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Tuesday</div>
+                                <input type="checkbox" name="patient-days" value="Tuesday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Tuesday</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Wednesday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Wednesday</div>
+                                <input type="checkbox" name="patient-days" value="Wednesday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Wednesday</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Thursday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Thursday</div>
+                                <input type="checkbox" name="patient-days" value="Thursday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Thursday</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Friday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Friday</div>
+                                <input type="checkbox" name="patient-days" value="Friday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Friday</div>
                             </label>
                             <label class="cursor-pointer">
-                                <input type="checkbox" name="patient-days" value="Saturday" class="peer sr-only" onchange="handleDaySelection(this)">
-                                <div class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">Saturday</div>
+                                <input type="checkbox" name="patient-days" value="Saturday" class="peer sr-only"
+                                    onchange="handleDaySelection(this)">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 dark:peer-checked:bg-blue-900/30 dark:peer-checked:text-blue-400 transition-all font-medium text-center">
+                                    Saturday</div>
                             </label>
                         </div>
                         <script>
                             function handleDaySelection(el) {
                                 const checkboxes = document.querySelectorAll('input[name="patient-days"]');
                                 if (el.value === "All Days" && el.checked) {
-                                    checkboxes.forEach(cb => { if(cb.value !== "All Days") cb.checked = false; });
+                                    checkboxes.forEach(cb => { if (cb.value !== "All Days") cb.checked = false; });
                                 } else if (el.checked) {
-                                    checkboxes.forEach(cb => { if(cb.value === "All Days") cb.checked = false; });
+                                    checkboxes.forEach(cb => { if (cb.value === "All Days") cb.checked = false; });
                                 }
                             }
                         </script>
@@ -380,38 +481,58 @@
                         <div class="flex flex-col gap-4">
                             <!-- Preview of previous choices -->
                             <div class="p-3 bg-gray-50 dark:bg-zinc-900 rounded-lg text-sm flex gap-2 flex-wrap mb-2">
-                                <span class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-1 rounded-md text-xs font-bold" id="preview-gov"></span>
-                                <span class="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-2 py-1 rounded-md text-xs font-bold" id="preview-case"></span>
-                                <span class="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-2 py-1 rounded-md text-xs font-bold" id="preview-days"></span>
+                                <span
+                                    class="bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-1 rounded-md text-xs font-bold"
+                                    id="preview-gov"></span>
+                                <span
+                                    class="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 px-2 py-1 rounded-md text-xs font-bold"
+                                    id="preview-case"></span>
+                                <span
+                                    class="bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 px-2 py-1 rounded-md text-xs font-bold"
+                                    id="preview-days"></span>
                             </div>
 
-                            <input type="text" id="patient-name" placeholder="Patient Full Name (Optional)" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                            <input type="text" id="patient-name" placeholder="Patient Full Name (Optional)"
+                                class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                             <div id="phone-numbers-container" class="flex flex-col gap-2">
                                 <div class="flex gap-2">
-                                    <input type="tel" class="patient-phone flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Phone Number (Optional)">
-                                    <button type="button" onclick="addPhoneInput()" class="px-4 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition-colors"><i class="fa-solid fa-plus"></i></button>
+                                    <input type="tel"
+                                        class="patient-phone flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                        placeholder="Phone Number (Optional)">
+                                    <button type="button" onclick="addPhoneInput()"
+                                        class="px-4 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition-colors"><i
+                                            class="fa-solid fa-plus"></i></button>
                                 </div>
                             </div>
-                            
+
                             <div>
-                                <label class="block font-bold mb-1 text-sm text-gray-600 dark:text-gray-400">Patient Photos (Optional - Multiple allowed)</label>
-                                <input type="file" id="patient-image" accept="image/*" multiple class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
+                                <label class="block font-bold mb-1 text-sm text-gray-600 dark:text-gray-400">Patient
+                                    Photos (Optional - Multiple allowed)</label>
+                                <input type="file" id="patient-image" accept="image/*" multiple
+                                    class="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer">
                             </div>
 
-                            <textarea id="patient-notes" placeholder="Additional Details / Notes (Optional)" rows="3" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"></textarea>
-                            
+                            <textarea id="patient-notes" placeholder="Additional Details / Notes (Optional)" rows="3"
+                                class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none"></textarea>
+
                             <div class="relative">
-                                <label class="block font-bold mb-1 text-sm text-gray-600 dark:text-gray-400">Patient Price (سعر المريض)</label>
-                                <input type="number" id="patient-price" placeholder="e.g. 25000" class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold text-green-600">
+                                <label class="block font-bold mb-1 text-sm text-gray-600 dark:text-gray-400">Patient
+                                    Price (سعر المريض)</label>
+                                <input type="number" id="patient-price" placeholder="e.g. 25000"
+                                    class="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold text-green-600">
                             </div>
                         </div>
                     </div>
 
                     <!-- Navigation Buttons -->
                     <div class="flex justify-between mt-8">
-                        <button type="button" id="btn-prev" class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors hidden">Back</button>
-                        <button type="button" id="btn-next" class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white transition-colors ml-auto shadow-lg shadow-blue-600/30">Next</button>
-                        <button type="submit" id="btn-submit" class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-green-600 hover:bg-green-700 text-white transition-colors ml-auto shadow-lg shadow-green-600/30 hidden">Save Patient</button>
+                        <button type="button" id="btn-prev"
+                            class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors hidden">Back</button>
+                        <button type="button" id="btn-next"
+                            class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-blue-600 hover:bg-blue-700 text-white transition-colors ml-auto shadow-lg shadow-blue-600/30">Next</button>
+                        <button type="submit" id="btn-submit"
+                            class="px-6 py-2.5 rounded-lg font-semibold text-sm bg-green-600 hover:bg-green-700 text-white transition-colors ml-auto shadow-lg shadow-green-600/30 hidden">Save
+                            Patient</button>
                     </div>
                 </form>
             </div>
@@ -419,11 +540,15 @@
     </div>
 
     <!-- Patient Info Modal -->
-    <div id="patient-info-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
+    <div id="patient-info-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
                 <h2 class="text-xl font-bold" data-i18n="patient-info">Patient Information</h2>
-                <button onclick="closePatientInfoModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                <button onclick="closePatientInfoModal()"
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
@@ -432,18 +557,23 @@
                 <div class="flex items-center justify-between gap-2 mb-6 relative h-10 z-[60]">
                     <div id="patient-filters-row" class="flex items-center gap-2 transition-all duration-300">
                         <div class="relative">
-                            <button onclick="toggleStatusDropdown(event)" class="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all flex items-center gap-2 whitespace-nowrap">
-                                <span data-i18n="statuses">Statuses</span> <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            <button onclick="toggleStatusDropdown(event)"
+                                class="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-all flex items-center gap-2 whitespace-nowrap">
+                                <span data-i18n="statuses">Statuses</span> <i
+                                    class="fa-solid fa-chevron-down text-[10px]"></i>
                             </button>
                             <!-- Status Dropdown/Tooltip with counts -->
-                            <div id="status-dropdown" onclick="event.stopPropagation()" class="absolute ltr:left-0 rtl:right-0 top-full mt-1 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-700 p-3 z-[100] hidden opacity-0 transition-all duration-200">
+                            <div id="status-dropdown" onclick="event.stopPropagation()"
+                                class="absolute ltr:left-0 rtl:right-0 top-full mt-1 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-100 dark:border-zinc-700 p-3 z-[100] hidden opacity-0 transition-all duration-200">
                                 <div class="space-y-2">
                                     <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-emerald-600" data-i18n="available">Available</span>
+                                        <span class="text-xs font-bold text-emerald-600"
+                                            data-i18n="available">Available</span>
                                         <span class="text-xs font-black" id="count-available">0</span>
                                     </div>
                                     <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-amber-600" data-i18n="pending">Pending</span>
+                                        <span class="text-xs font-bold text-amber-600"
+                                            data-i18n="pending">Pending</span>
                                         <span class="text-xs font-black" id="count-pending">0</span>
                                     </div>
                                     <div class="flex justify-between items-center">
@@ -451,7 +581,9 @@
                                         <span class="text-xs font-black" id="count-used">0</span>
                                     </div>
                                     <div class="pt-2 border-t border-zinc-100 dark:border-zinc-700">
-                                        <select id="patient-status-filter" onchange="filterPatients(); closeStatusDropdown()" class="w-full text-[10px] font-bold bg-transparent focus:outline-none cursor-pointer">
+                                        <select id="patient-status-filter"
+                                            onchange="filterPatients(); closeStatusDropdown()"
+                                            class="w-full text-[10px] font-bold bg-transparent focus:outline-none cursor-pointer">
                                             <option value="All" data-i18n="all-statuses">All Statuses</option>
                                             <option value="Available" data-i18n="available">Available</option>
                                             <option value="Pending" data-i18n="pending">Pending</option>
@@ -461,34 +593,40 @@
                                 </div>
                             </div>
                         </div>
-                        <select id="patient-time-filter" onchange="filterPatients()" class="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none transition-all whitespace-nowrap">
+                        <select id="patient-time-filter" onchange="filterPatients()"
+                            class="px-3 py-1.5 border border-zinc-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-xs font-bold hover:bg-zinc-50 dark:hover:bg-zinc-700 focus:outline-none transition-all whitespace-nowrap">
                             <option value="All" data-i18n="all-time">All Time</option>
                             <option value="1d" data-i18n="last-24h">Last 24 Hours</option>
                             <option value="1w" data-i18n="last-week">Last Week</option>
                             <option value="1m" data-i18n="last-month">Last Month</option>
                             <option value="1y" data-i18n="last-year">Last Year</option>
                         </select>
-                        <button onclick="openAdvancedFilter()" class="p-2 text-zinc-400 hover:text-blue-500 transition-colors" title="Advanced Filter">
+                        <button onclick="openAdvancedFilter()"
+                            class="p-2 text-zinc-400 hover:text-blue-500 transition-colors" title="Advanced Filter">
                             <i class="fa-solid fa-filter"></i>
                         </button>
                     </div>
-                    
+
                     <!-- Search Icon/Input -->
                     <div id="patient-search-container" class="absolute flex items-center bg-gray-50 dark:bg-zinc-900 transition-all duration-300 w-10 
                          ltr:right-0 rtl:left-0">
-                        <input type="text" id="patient-search-input" oninput="filterPatients()" onfocus="expandSearch()" onblur="collapseSearch()" class="w-0 px-0 py-1.5 rounded border-b border-zinc-300 dark:border-zinc-700 bg-transparent focus:outline-none text-xs transition-all duration-300 placeholder:text-zinc-400 opacity-0" data-i18n-placeholder="search-placeholder">
-                        <button onclick="document.getElementById('patient-search-input').focus()" class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
+                        <input type="text" id="patient-search-input" oninput="filterPatients()" onfocus="expandSearch()"
+                            onblur="collapseSearch()"
+                            class="w-0 px-0 py-1.5 rounded border-b border-zinc-300 dark:border-zinc-700 bg-transparent focus:outline-none text-xs transition-all duration-300 placeholder:text-zinc-400 opacity-0"
+                            data-i18n-placeholder="search-placeholder">
+                        <button onclick="document.getElementById('patient-search-input').focus()"
+                            class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors">
                             <i class="fa-solid fa-magnifying-glass"></i>
                         </button>
                     </div>
                 </div>
 
                 <script>
-                    window.toggleStatusDropdown = function(e) {
+                    window.toggleStatusDropdown = function (e) {
                         e.stopPropagation();
                         const dropdown = document.getElementById('status-dropdown');
                         const isHidden = dropdown.classList.contains('hidden');
-                        
+
                         if (isHidden) {
                             dropdown.classList.remove('hidden');
                             setTimeout(() => dropdown.style.opacity = '1', 10);
@@ -497,7 +635,7 @@
                         }
                     }
 
-                    window.closeStatusDropdown = function() {
+                    window.closeStatusDropdown = function () {
                         const dropdown = document.getElementById('status-dropdown');
                         if (!dropdown) return;
                         dropdown.style.opacity = '0';
@@ -509,12 +647,12 @@
                         window.closeStatusDropdown();
                     });
 
-                    window.expandSearch = function() {
+                    window.expandSearch = function () {
                         const container = document.getElementById('patient-search-container');
                         const input = document.getElementById('patient-search-input');
                         const filters = document.getElementById('patient-filters-row');
                         const isRtl = document.documentElement.dir === 'rtl';
-                        
+
                         container.style.width = '100%';
                         input.style.width = '100%';
                         if (isRtl) {
@@ -530,13 +668,13 @@
                         filters.style.pointerEvents = 'none';
                     }
 
-                    window.collapseSearch = function() {
+                    window.collapseSearch = function () {
                         const input = document.getElementById('patient-search-input');
                         if (input.value.trim() !== '') return; // Don't collapse if has value
 
                         const container = document.getElementById('patient-search-container');
                         const filters = document.getElementById('patient-filters-row');
-                        
+
                         container.style.width = '40px';
                         input.style.width = '0';
                         input.style.paddingLeft = '0';
@@ -547,9 +685,9 @@
                         filters.style.pointerEvents = 'auto';
                     }
 
-                    window.openAdvancedFilter = function() {
+                    window.openAdvancedFilter = function () {
                         const modal = document.getElementById('advanced-filter-modal');
-                        
+
                         // Populate Cases
                         const casesContainer = document.getElementById('adv-cases-container');
                         if (casesContainer) {
@@ -578,18 +716,18 @@
                         setTimeout(() => modal.querySelector('.modal-content').classList.remove('translate-y-full'), 10);
                     }
 
-                    window.closeAdvancedFilter = function() {
+                    window.closeAdvancedFilter = function () {
                         const modal = document.getElementById('advanced-filter-modal');
                         modal.querySelector('.modal-content').classList.add('translate-y-full');
                         setTimeout(() => modal.classList.add('hidden'), 300);
                     }
 
-                    window.applyAdvancedFilter = function() {
+                    window.applyAdvancedFilter = function () {
                         filterPatients();
                         closeAdvancedFilter();
                     }
 
-                    window.resetAdvancedFilter = function() {
+                    window.resetAdvancedFilter = function () {
                         document.getElementById('adv-gov').value = 'All';
                         document.getElementById('adv-city').value = '';
                         document.querySelectorAll('input[name="adv-day"]').forEach(cb => cb.checked = false);
@@ -609,26 +747,33 @@
     </div>
 
     <!-- Telegram Users Modal -->
-    <div id="telegram-users-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
+    <div id="telegram-users-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[80] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
                 <h2 class="text-xl font-bold flex items-center gap-2">
                     <i class="fa-brands fa-telegram text-blue-500"></i>
                     <span data-i18n="telegram-users">Telegram Users</span>
                 </h2>
-                <button onclick="closeTelegramUsersModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                <button onclick="closeTelegramUsersModal()"
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
 
             <!-- Tabs -->
             <div class="flex border-b border-gray-100 dark:border-zinc-700 shrink-0 px-4">
-                <button id="tab-users-btn" onclick="switchTelegramTab('users')" class="px-4 py-3 text-sm font-semibold border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 transition-colors">
+                <button id="tab-users-btn" onclick="switchTelegramTab('users')"
+                    class="px-4 py-3 text-sm font-semibold border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 transition-colors">
                     <i class="fa-solid fa-users mr-1"></i> المستخدمين
                 </button>
-                <button id="tab-requests-btn" onclick="switchTelegramTab('requests')" class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative">
+                <button id="tab-requests-btn" onclick="switchTelegramTab('requests')"
+                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative">
                     <i class="fa-solid fa-money-bill-wave mr-1"></i> طلبات التعبئة
-                    <span id="requests-badge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"></span>
+                    <span id="requests-badge"
+                        class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"></span>
                 </button>
             </div>
 
@@ -636,18 +781,22 @@
             <div id="tab-users" class="p-6 overflow-y-auto bg-gray-50 dark:bg-zinc-900/50 flex-1">
                 <!-- User Category Filters -->
                 <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
-                    <button onclick="filterTelegramUsers('all')" id="filter-all" class="px-4 py-2 rounded-full text-xs font-bold bg-blue-600 text-white shadow-sm transition-all whitespace-nowrap">
+                    <button onclick="filterTelegramUsers('all')" id="filter-all"
+                        class="px-4 py-2 rounded-full text-xs font-bold bg-blue-600 text-white shadow-sm transition-all whitespace-nowrap">
                         الكل (All)
                     </button>
-                    <button onclick="filterTelegramUsers('with-points')" id="filter-points" class="px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-zinc-700 shadow-sm transition-all whitespace-nowrap">
+                    <button onclick="filterTelegramUsers('with-points')" id="filter-points"
+                        class="px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-zinc-700 shadow-sm transition-all whitespace-nowrap">
                         لديهم نقاط (With Points)
                     </button>
-                    <button onclick="filterTelegramUsers('no-points')" id="filter-no-points" class="px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-zinc-700 shadow-sm transition-all whitespace-nowrap">
+                    <button onclick="filterTelegramUsers('no-points')" id="filter-no-points"
+                        class="px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-zinc-800 text-gray-500 dark:text-gray-400 border border-gray-100 dark:border-zinc-700 shadow-sm transition-all whitespace-nowrap">
                         بدون نقاط (Zero Balance)
                     </button>
                 </div>
 
-                <div class="overflow-x-auto bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl shadow-sm">
+                <div
+                    class="overflow-x-auto bg-white dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-xl shadow-sm">
                     <table class="w-full text-left text-sm whitespace-nowrap">
                         <thead class="text-xs text-gray-500 bg-gray-50 dark:bg-zinc-900/50 uppercase">
                             <tr>
@@ -665,8 +814,10 @@
             <!-- Tab: Activity (New) -->
             <div id="tab-activity" class="p-6 overflow-y-auto bg-gray-50 dark:bg-zinc-900/50 flex-1 hidden">
                 <div class="mb-4 flex items-center justify-between">
-                    <h3 class="font-bold text-sm text-gray-500 uppercase tracking-wider" id="activity-user-title">User Activity</h3>
-                    <button onclick="switchTelegramTab('users')" class="text-xs text-blue-600 font-bold hover:underline">
+                    <h3 class="font-bold text-sm text-gray-500 uppercase tracking-wider" id="activity-user-title">User
+                        Activity</h3>
+                    <button onclick="switchTelegramTab('users')"
+                        class="text-xs text-blue-600 font-bold hover:underline">
                         <i class="fa-solid fa-arrow-left mr-1"></i> Back to Users
                     </button>
                 </div>
@@ -685,26 +836,31 @@
     </div>
 
     <!-- Edit Telegram User Modal -->
-    <div id="edit-telegram-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
+    <div id="edit-telegram-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[90] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold flex items-center gap-2">
                     <i class="fa-solid fa-pen-to-square text-blue-500"></i>
                     <span data-i18n="edit-balance">Edit Balance</span>
                 </h2>
-                <button onclick="closeEditTelegramModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                <button onclick="closeEditTelegramModal()"
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
             <div class="p-6">
                 <form id="edit-telegram-form" class="flex flex-col gap-4">
                     <input type="hidden" id="edit-telegram-id">
-                    
-                    <div class="p-4 bg-gray-50 dark:bg-zinc-900 rounded-xl mb-2 border border-gray-100 dark:border-zinc-700">
+
+                    <div
+                        class="p-4 bg-gray-50 dark:bg-zinc-900 rounded-xl mb-2 border border-gray-100 dark:border-zinc-700">
                         <div class="flex flex-col gap-2">
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-500 font-bold" data-i18n="username">Username:</span>
-                                <span id="edit-telegram-username" class="font-black text-blue-600 dark:text-blue-400"></span>
+                                <span id="edit-telegram-username"
+                                    class="font-black text-blue-600 dark:text-blue-400"></span>
                             </div>
                             <div class="flex justify-between text-xs">
                                 <span class="text-gray-500 font-bold" data-i18n="name">Name:</span>
@@ -718,18 +874,24 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1" data-i18n="balance">Balance</label>
-                        <input type="number" step="any" id="edit-telegram-balance" required class="w-full px-4 py-3 rounded-lg bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-black text-green-600 dark:text-green-400 text-center">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1"
+                            data-i18n="balance">Balance</label>
+                        <input type="number" step="any" id="edit-telegram-balance" required
+                            class="w-full px-4 py-3 rounded-lg bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-black text-green-600 dark:text-green-400 text-center">
                     </div>
-                    
+
                     <div class="flex flex-col gap-3 mt-4">
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-blue-600/30 text-sm" data-i18n="save-changes">
+                        <button type="submit"
+                            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-blue-600/30 text-sm"
+                            data-i18n="save-changes">
                             Save Changes
                         </button>
-                        <button type="button" onclick="viewUserActivity()" class="w-full bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-6 py-3 rounded-xl font-semibold transition-colors text-sm border border-zinc-200 dark:border-zinc-600">
+                        <button type="button" onclick="viewUserActivity()"
+                            class="w-full bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-6 py-3 rounded-xl font-semibold transition-colors text-sm border border-zinc-200 dark:border-zinc-600">
                             <i class="fa-solid fa-clock-rotate-left mr-1"></i> عرض النشاط (View Activity)
                         </button>
-                        <button type="button" onclick="openWithdrawModal()" class="w-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-6 py-3 rounded-xl font-semibold transition-colors text-sm border border-orange-200 dark:border-orange-800">
+                        <button type="button" onclick="openWithdrawModal()"
+                            class="w-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-6 py-3 rounded-xl font-semibold transition-colors text-sm border border-orange-200 dark:border-orange-800">
                             <i class="fa-solid fa-money-bill-transfer mr-1"></i> سحب مبلغ (Withdraw)
                         </button>
                     </div>
@@ -741,23 +903,27 @@
     <!-- Advanced Filter Modal -->
     <div id="advanced-filter-modal" class="fixed inset-0 z-[100] hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeAdvancedFilter()"></div>
-        <div class="absolute bottom-0 left-0 right-0 max-h-[90vh] bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-2xl overflow-hidden translate-y-full transition-transform duration-300 modal-content">
-            <div class="p-6 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center sticky top-0 bg-white dark:bg-zinc-900 z-10">
+        <div
+            class="absolute bottom-0 left-0 right-0 max-h-[90vh] bg-white dark:bg-zinc-900 rounded-t-[2.5rem] shadow-2xl overflow-hidden translate-y-full transition-transform duration-300 modal-content">
+            <div
+                class="p-6 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center sticky top-0 bg-white dark:bg-zinc-900 z-10">
                 <h2 class="text-xl font-black flex items-center gap-2">
                     <i class="fa-solid fa-filter text-blue-600"></i>
                     Advanced Filter
                 </h2>
-                <button onclick="closeAdvancedFilter()" class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+                <button onclick="closeAdvancedFilter()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </div>
-            
+
             <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
                 <div class="space-y-6">
                     <!-- Governorate -->
                     <div>
                         <label class="block font-bold mb-2 text-sm">Governorate (المحافظة)</label>
-                        <select id="adv-gov" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <select id="adv-gov"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
                             <option value="All">All Governorates</option>
                             <option value="Baghdad">Baghdad (بغداد)</option>
                             <option value="Basra">Basra (البصرة)</option>
@@ -783,13 +949,15 @@
                     <!-- City -->
                     <div>
                         <label class="block font-bold mb-2 text-sm">City / Region (المدينة)</label>
-                        <input type="text" id="adv-city" placeholder="Search city..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <input type="text" id="adv-city" placeholder="Search city..."
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
                     </div>
 
                     <!-- Status -->
                     <div>
                         <label class="block font-bold mb-2 text-sm">Status (الحالة)</label>
-                        <select id="adv-status" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
+                        <select id="adv-status"
+                            class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-zinc-800 border-none focus:ring-2 focus:ring-blue-500 text-sm font-bold">
                             <option value="All">All Statuses</option>
                             <option value="Available">Available</option>
                             <option value="Pending">Pending</option>
@@ -816,10 +984,12 @@
 
                 <!-- Footer Actions -->
                 <div class="mt-10 flex gap-4 pb-12">
-                    <button onclick="resetAdvancedFilter()" class="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-all">
+                    <button onclick="resetAdvancedFilter()"
+                        class="flex-1 py-4 rounded-2xl bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 font-black text-sm hover:bg-gray-200 transition-all">
                         Reset All
                     </button>
-                    <button onclick="applyAdvancedFilter()" class="flex-[2] py-4 rounded-2xl bg-blue-600 text-white font-black text-sm hover:bg-blue-700 shadow-xl shadow-blue-600/30 active:scale-[0.98] transition-all">
+                    <button onclick="applyAdvancedFilter()"
+                        class="flex-[2] py-4 rounded-2xl bg-blue-600 text-white font-black text-sm hover:bg-blue-700 shadow-xl shadow-blue-600/30 active:scale-[0.98] transition-all">
                         Apply Filters
                     </button>
                 </div>
@@ -828,18 +998,22 @@
     </div>
 
     <!-- System Activity Modal (Global Log) -->
-    <div id="system-activity-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
+    <div id="system-activity-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
                 <h2 class="text-xl font-bold flex items-center gap-2">
                     <i class="fa-solid fa-list-check text-orange-500"></i>
                     <span>سجل النشاط العام (System Activity)</span>
                 </h2>
-                <button onclick="closeSystemActivityModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
+                <button onclick="closeSystemActivityModal()"
+                    class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
             </div>
-            
+
             <div class="p-6 overflow-y-auto bg-gray-50 dark:bg-zinc-900/50 flex-1">
                 <div id="global-activity-list" class="space-y-4">
                     <!-- Populated by JS -->
@@ -850,9 +1024,10 @@
     </div>
 
     <!-- App Scripts -->
-    
+
     <script src="js/dashboard.js"></script>
     <script src="js/patients.js"></script>
     <script src="js/telegram-users.js"></script>
 </body>
+
 </html>
