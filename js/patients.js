@@ -506,16 +506,31 @@ function renderPatientsList(patients) {
             'Available': {
                 bg: 'bg-emerald-50 dark:bg-emerald-900/30',
                 text: 'text-emerald-700 dark:text-emerald-400',
+                priceBg: 'bg-emerald-50 dark:bg-emerald-900/30',
+                priceText: 'text-emerald-600 dark:text-emerald-400',
+                priceBorder: 'border-emerald-100 dark:border-emerald-800',
+                cardBg: 'bg-white dark:bg-zinc-800',
+                cardBorder: 'border-zinc-100 dark:border-zinc-700',
                 label: translations[currentLang]['available'] || 'Available'
             },
             'Pending': {
                 bg: 'bg-amber-50 dark:bg-amber-900/30',
                 text: 'text-amber-700 dark:text-amber-400',
+                priceBg: 'bg-amber-50 dark:bg-amber-900/30',
+                priceText: 'text-amber-600 dark:text-amber-400',
+                priceBorder: 'border-amber-100 dark:border-amber-800',
+                cardBg: 'bg-amber-50/40 dark:bg-amber-900/10',
+                cardBorder: 'border-amber-100 dark:border-amber-800/50',
                 label: translations[currentLang]['pending'] || 'Pending'
             },
             'Used': {
                 bg: 'bg-zinc-100 dark:bg-zinc-800',
                 text: 'text-zinc-600 dark:text-zinc-400',
+                priceBg: 'bg-zinc-100 dark:bg-zinc-700',
+                priceText: 'text-zinc-600 dark:text-zinc-400',
+                priceBorder: 'border-zinc-200 dark:border-zinc-600',
+                cardBg: 'bg-zinc-100/50 dark:bg-zinc-800/50',
+                cardBorder: 'border-zinc-200 dark:border-zinc-700',
                 label: translations[currentLang]['used'] || 'Used'
             }
         };
@@ -538,8 +553,8 @@ function renderPatientsList(patients) {
                         `<div class="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-zinc-900/50"><i class="fa-solid fa-user text-zinc-300 dark:text-zinc-700 text-lg"></i></div>`
                     }
                 </div>
-                <div class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800">
-                    <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
+                <div class="px-2 py-0.5 rounded-md ${config.priceBg} border ${config.priceBorder}">
+                    <span class="text-[9px] font-black ${config.priceText}">
                         ${(p.price || 0).toLocaleString()} IQD
                     </span>
                 </div>
@@ -547,7 +562,7 @@ function renderPatientsList(patients) {
         `;
 
         const card = document.createElement('div');
-        card.className = 'bg-white dark:bg-zinc-800 rounded-xl p-4 border border-zinc-100 dark:border-zinc-700 shadow-sm hover:shadow-md transition-all animate-fade-in-up cursor-pointer mb-2';
+        card.className = `${config.cardBg} rounded-xl p-4 border ${config.cardBorder} shadow-sm hover:shadow-md transition-all animate-fade-in-up cursor-pointer mb-2`;
         card.onclick = (e) => {
             if (!e.target.closest('button') && !e.target.closest('img')) editPatient(p.id);
         };
@@ -1019,6 +1034,30 @@ function ensureEditModalExists() {
         if (e.target.id === 'edit-patient-modal') closeEditPatientModal();
     });
 
+    const editStatusSelect = document.getElementById('edit-patient-status');
+    const updateEditPriceColor = () => {
+        const status = editStatusSelect.value;
+        const priceLabel = document.querySelector('label[for="edit-patient-price"]') || document.querySelector('label.text-green-600');
+        const priceInput = document.getElementById('edit-patient-price');
+        
+        // Remove existing status classes
+        if (priceLabel) priceLabel.classList.remove('text-green-600', 'text-amber-600', 'text-zinc-500');
+        priceInput.classList.remove('text-green-600', 'text-amber-600', 'text-zinc-500', 'bg-amber-50', 'dark:bg-amber-900/10', 'bg-zinc-100', 'dark:bg-zinc-800/50', 'border-amber-200', 'border-zinc-300');
+
+        if (status === 'Available') {
+            if (priceLabel) priceLabel.classList.add('text-green-600');
+            priceInput.classList.add('text-green-600');
+        } else if (status === 'Pending') {
+            if (priceLabel) priceLabel.classList.add('text-amber-600');
+            priceInput.classList.add('text-amber-600', 'bg-amber-50', 'dark:bg-amber-900/10', 'border-amber-200');
+        } else {
+            if (priceLabel) priceLabel.classList.add('text-zinc-500');
+            priceInput.classList.add('text-zinc-500', 'bg-zinc-100', 'dark:bg-zinc-800/50', 'border-zinc-300');
+        }
+    };
+    editStatusSelect.addEventListener('change', updateEditPriceColor);
+    window.updateEditPriceColor = updateEditPriceColor; // Expose for manual trigger
+
     document.getElementById('edit-patient-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         await saveEditedPatient();
@@ -1171,6 +1210,7 @@ window.editPatient = async function (patientId) {
         }
 
         document.getElementById('edit-patient-modal').classList.remove('hidden');
+        if (window.updateEditPriceColor) window.updateEditPriceColor();
     } catch (err) {
         console.error(err);
         alert('Error loading patient: ' + err.message);
