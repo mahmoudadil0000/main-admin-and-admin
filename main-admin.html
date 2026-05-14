@@ -796,7 +796,7 @@
                     <i class="fa-solid fa-users mr-1"></i> المستخدمين
                 </button>
                 <button id="tab-requests-btn" onclick="switchTelegramTab('requests')"
-                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative">
+                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative hidden">
                     <i class="fa-solid fa-money-bill-wave mr-1"></i> طلبات التعبئة
                     <span id="requests-badge"
                         class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"></span>
@@ -899,7 +899,7 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div id="edit-balance-container">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1"
                             data-i18n="balance">Balance</label>
                         <input type="number" step="any" id="edit-telegram-balance" required
@@ -907,7 +907,7 @@
                     </div>
 
                     <div class="flex flex-col gap-3 mt-4">
-                        <button type="submit"
+                        <button type="submit" id="save-balance-btn"
                             class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-blue-600/30 text-sm"
                             data-i18n="save-changes">
                             Save Changes
@@ -916,7 +916,7 @@
                             class="w-full bg-zinc-100 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 px-6 py-3 rounded-xl font-semibold transition-colors text-sm border border-zinc-200 dark:border-zinc-600">
                             <i class="fa-solid fa-clock-rotate-left mr-1"></i> عرض النشاط (View Activity)
                         </button>
-                        <button type="button" onclick="openWithdrawModal()"
+                        <button type="button" id="withdraw-balance-btn" onclick="openWithdrawModal()"
                             class="w-full bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-6 py-3 rounded-xl font-semibold transition-colors text-sm border border-orange-200 dark:border-orange-800">
                             <i class="fa-solid fa-money-bill-transfer mr-1"></i> سحب مبلغ (Withdraw)
                         </button>
