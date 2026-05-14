@@ -29,7 +29,6 @@ window.openAddPatientModal = function () {
     }
 
     if (typeof can === 'function' && !can('add-patient')) {
-        alert('You do not have permission to add patients. (ليس لديك صلاحية إضافة مرضى)');
         return;
     }
     patientModal.classList.remove('hidden');
@@ -1247,7 +1246,6 @@ window.addEditPhoneInput = function (val = '') {
 
 window.saveEditedPatient = async function () {
     if (!can('edit-patient')) {
-        alert(currentLang === 'ar' ? 'ليس لديك صلاحية تعديل المرضى.' : 'You do not have permission to edit patients.');
         return;
     }
     const btn = document.getElementById('edit-save-btn');
@@ -1392,7 +1390,6 @@ window.togglePatientHistory = function () {
 
 window.deletePatient = async function () {
     if (!can('delete-patient')) {
-        alert(currentLang === 'ar' ? 'ليس لديك صلاحية حذف المرضى.' : 'You do not have permission to delete patients.');
         return;
     }
     const patientId = document.getElementById('edit-patient-id').value;
