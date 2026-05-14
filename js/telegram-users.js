@@ -178,6 +178,10 @@ const editTelegramForm = document.getElementById('edit-telegram-form');
 if (editTelegramForm) {
     editTelegramForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (!can('edit-balance')) {
+            alert(currentLang === 'ar' ? 'ليس لديك صلاحية تعديل الرصيد.' : 'You do not have permission to edit balance.');
+            return;
+        }
         const id = document.getElementById('edit-telegram-id').value;
         const newBalance = parseFloat(document.getElementById('edit-telegram-balance').value);
 
@@ -296,6 +300,10 @@ function switchTelegramTab(tab) {
         usersBtn.classList.remove('border-transparent', 'text-gray-500');
         loadTelegramUsers();
     } else if (tab === 'requests') {
+        if (!can('view-recharge')) {
+            alert(currentLang === 'ar' ? 'ليس لديك صلاحية عرض طلبات التعبئة.' : 'You do not have permission to view recharge requests.');
+            return;
+        }
         requestsTab.classList.remove('hidden');
         requestsBtn.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
         requestsBtn.classList.remove('border-transparent', 'text-gray-500');
@@ -622,6 +630,10 @@ function loadRechargeRequests() {
 }
 
 function approveRequest(event, requestId, telegramId, amount) {
+    if (!can('approve-recharge')) {
+        alert(currentLang === 'ar' ? 'ليس لديك صلاحية قبول طلبات التعبئة.' : 'You do not have permission to approve recharge requests.');
+        return;
+    }
     if (!confirm(`هل أنت متأكد من قبول الطلب وإضافة مبلغ ${amount.toLocaleString()} د.ع إلى رصيد المستخدم؟`)) return;
 
     const btn = event.currentTarget;
@@ -733,6 +745,10 @@ function approveRequest(event, requestId, telegramId, amount) {
 }
 
 function rejectRequest(event, requestId) {
+    if (!can('approve-recharge')) {
+        alert(currentLang === 'ar' ? 'ليس لديك صلاحية رفض طلبات التعبئة.' : 'You do not have permission to reject recharge requests.');
+        return;
+    }
     if (!confirm('هل أنت متأكد من رفض وحذف هذا الطلب؟')) return;
 
     const btn = event.currentTarget;
@@ -754,6 +770,10 @@ function rejectRequest(event, requestId) {
 }
 
 async function openWithdrawModal() {
+    if (!can('withdraw-balance')) {
+        alert(currentLang === 'ar' ? 'ليس لديك صلاحية سحب الرصيد.' : 'You do not have permission to withdraw balance.');
+        return;
+    }
     const id = document.getElementById('edit-telegram-id').value;
     const currentBalance = parseFloat(document.getElementById('edit-telegram-balance').value) || 0;
 
