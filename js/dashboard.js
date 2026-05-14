@@ -117,8 +117,20 @@ addAdminForm.addEventListener('submit', async (e) => {
             username: username,
             email: email,
             role: role,
+            permissions: {
+                'add-patient': false,
+                'view-patients': false,
+                'edit-patient': false,
+                'delete-patient': false,
+                'tg-users': false,
+                'edit-balance': false,
+                'withdraw-balance': false,
+                'view-recharge': false,
+                'approve-recharge': false,
+                'pdf-system': false
+            },
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        }, { merge: true });
 
         addAdminForm.reset();
         alert(`SUCCESS: Account successfully linked/created!\n\nThey can now login with Username: ${username}.`);
@@ -137,7 +149,71 @@ addAdminForm.addEventListener('submit', async (e) => {
 const editAdminModal = document.getElementById('edit-admin-modal');
 const editAdminForm = document.getElementById('edit-admin-form');
 
-window.openEditAdmin = function (id, username, email) {
+// All granular permissions — each one maps to a can() check in admin.html
+const ALL_PERMISSIONS = [
+    { key: 'add-patient',       label: 'إضافة مريض (Add Patient)',              icon: 'fa-user-plus',            color: 'green' },
+    { key: 'view-patients',     label: 'عرض المرضى (View Patients)',            icon: 'fa-notes-medical',        color: 'purple' },
+    { key: 'edit-patient',      label: 'تعديل بيانات المرضى (Edit Patient)',    icon: 'fa-pen-to-square',        color: 'blue' },
+    { key: 'delete-patient',    label: 'حذف المرضى (Delete Patient)',           icon: 'fa-trash-can',            color: 'red' },
+    { key: 'tg-users',          label: 'عرض مستخدمين التليجرام (TG Users)',     icon: 'fa-users',                color: 'sky' },
+    { key: 'edit-balance',      label: 'تعديل الرصيد (Edit Balance)',           icon: 'fa-money-bill-wave',      color: 'amber' },
+    { key: 'withdraw-balance',  label: 'سحب من الرصيد (Withdraw)',              icon: 'fa-money-bill-transfer',  color: 'orange' },
+    { key: 'view-recharge',     label: 'عرض طلبات التعبئة (View Recharge)',     icon: 'fa-receipt',              color: 'teal' },
+    { key: 'approve-recharge',  label: 'قبول طلبات التعبئة (Approve Recharge)', icon: 'fa-check-double',         color: 'emerald' },
+    { key: 'pdf-system',        label: 'نظام PDF (PDF System)',                 icon: 'fa-file-pdf',             color: 'rose' },
+];
+
+// Build permissions toggle UI
+function renderPermissionToggles(existingPermissions) {
+    const container = document.getElementById('permissions-toggles');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const perms = existingPermissions || {};
+
+    ALL_PERMISSIONS.forEach(perm => {
+        const isOn = !!perms[perm.key];
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-zinc-700 bg-gray-50/50 dark:bg-zinc-900/30 hover:bg-gray-50 dark:hover:bg-zinc-900/50 transition-colors';
+        row.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-${perm.color}-100 dark:bg-${perm.color}-900/30 text-${perm.color}-600 dark:text-${perm.color}-400 flex items-center justify-center text-sm">
+                    <i class="fa-solid ${perm.icon}"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">${perm.label}</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer perm-toggle" data-perm-key="${perm.key}" ${isOn ? 'checked' : ''}>
+                <div class="w-10 h-5 bg-gray-300 dark:bg-zinc-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+        `;
+        container.appendChild(row);
+    });
+
+    // Attach change listeners — save to Firestore immediately on toggle
+    container.querySelectorAll('.perm-toggle').forEach(toggle => {
+        toggle.addEventListener('change', async (e) => {
+            const permKey = e.target.dataset.permKey;
+            const isChecked = e.target.checked;
+            const adminId = document.getElementById('edit-admin-id').value;
+            if (!adminId) return;
+
+            try {
+                await db.collection('users').doc(adminId).update({
+                    [`permissions.${permKey}`]: isChecked
+                });
+                console.log(`✅ Permission [${permKey}] → ${isChecked} for ${adminId}`);
+            } catch (err) {
+                console.error(`❌ Failed to update permission [${permKey}]:`, err);
+                // Revert the toggle on failure
+                e.target.checked = !isChecked;
+                alert('حدث خطأ أثناء تحديث الصلاحية. تأكد من اتصالك بالإنترنت.');
+            }
+        });
+    });
+}
+
+window.openEditAdmin = async function (id, username, email) {
     document.getElementById('edit-admin-id').value = id;
     document.getElementById('edit-admin-username').value = username || '';
     document.getElementById('edit-admin-email').value = email || '';
@@ -146,6 +222,25 @@ window.openEditAdmin = function (id, username, email) {
     // Load this admin's activity
     loadAdminActivity(id);
 
+    // Load permissions from Firestore and render toggles
+    const permSection = document.getElementById('permissions-section');
+    try {
+        const userDoc = await db.collection('users').doc(id).get();
+        if (userDoc.exists) {
+            const userData = userDoc.data();
+            // Only show permissions for admin role (not customer, not main_admin)
+            if (userData.role === 'admin') {
+                renderPermissionToggles(userData.permissions || {});
+                if (permSection) permSection.classList.remove('hidden');
+            } else {
+                if (permSection) permSection.classList.add('hidden');
+            }
+        }
+    } catch (e) {
+        console.error('Error loading permissions:', e);
+        if (permSection) permSection.classList.add('hidden');
+    }
+
     editAdminModal.classList.remove('hidden');
 }
 
@@ -153,33 +248,44 @@ window.closeEditAdmin = function () {
     editAdminModal.classList.add('hidden');
 }
 
-editAdminModal.addEventListener('click', (e) => {
-    if (e.target === editAdminModal) closeEditAdmin();
-});
+// Close button — using addEventListener for reliability (not inline onclick)
+const editAdminCloseBtn = document.getElementById('edit-admin-close-btn');
+if (editAdminCloseBtn) {
+    editAdminCloseBtn.addEventListener('click', () => closeEditAdmin());
+}
 
-editAdminForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('edit-admin-id').value;
-    const newUsername = document.getElementById('edit-admin-username').value.trim();
-    const newPassword = document.getElementById('edit-admin-password').value;
-    const email = document.getElementById('edit-admin-email').value;
+// Backdrop click to close
+if (editAdminModal) {
+    editAdminModal.addEventListener('click', (e) => {
+        if (e.target === editAdminModal) closeEditAdmin();
+    });
+}
 
-    try {
-        await db.collection('users').doc(id).update({
-            username: newUsername
-        });
+if (editAdminForm) {
+    editAdminForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-admin-id').value;
+        const newUsername = document.getElementById('edit-admin-username').value.trim();
+        const newPassword = document.getElementById('edit-admin-password').value;
+        const email = document.getElementById('edit-admin-email').value;
 
-        if (newPassword) {
-            alert(`Username updated!\n\n⚠️ NOTE ON PASSWORD: To securely update another user's password (${email}), you need Firebase Cloud Functions. A frontend web app is not allowed to force-change another user's password for security reasons.`);
-        } else {
-            alert('Admin details updated successfully!');
+        try {
+            await db.collection('users').doc(id).update({
+                username: newUsername
+            });
+
+            if (newPassword) {
+                alert(`Username updated!\n\n⚠️ NOTE ON PASSWORD: To securely update another user's password (${email}), you need Firebase Cloud Functions. A frontend web app is not allowed to force-change another user's password for security reasons.`);
+            } else {
+                alert('Admin details updated successfully!');
+            }
+            closeEditAdmin();
+        } catch (error) {
+            console.error("Error updating admin:", error);
+            alert('Error updating admin: ' + error.message);
         }
-        closeEditAdmin();
-    } catch (error) {
-        console.error("Error updating admin:", error);
-        alert('Error updating admin: ' + error.message);
-    }
-});
+    });
+}
 
 window.deleteCurrentAdmin = async function () {
     const id = document.getElementById('edit-admin-id').value;
