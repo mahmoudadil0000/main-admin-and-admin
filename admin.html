@@ -650,7 +650,7 @@
                     <i class="fa-solid fa-users mr-1"></i> المستخدمين
                 </button>
                 <button id="tab-requests-btn" onclick="switchTelegramTab('requests')"
-                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative">
+                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative hidden">
                     <i class="fa-solid fa-money-bill-wave mr-1"></i> طلبات التعبئة
                     <span id="requests-badge"
                         class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"></span>
@@ -722,18 +722,22 @@
                         </div>
                     </div>
 
-                    <div>
+                    <div id="edit-balance-container">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1"
                             data-i18n="balance">Balance</label>
                         <input type="number" step="any" id="edit-telegram-balance" required
                             class="w-full px-4 py-3 rounded-lg bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg font-black text-green-600 dark:text-green-400 text-center">
                     </div>
 
-                    <div class="mt-4">
-                        <button type="submit"
+                    <div class="mt-4 flex flex-col gap-2">
+                        <button type="submit" id="save-balance-btn"
                             class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors shadow-lg shadow-blue-600/30 text-sm"
                             data-i18n="save-changes">
                             Save Changes
+                        </button>
+                        <button type="button" id="withdraw-balance-btn" onclick="openWithdrawModal()"
+                            class="w-full bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 px-6 py-3 rounded-xl font-semibold transition-colors text-sm">
+                            <i class="fa-solid fa-money-bill-transfer mr-1"></i> سحب رصيد يدوي
                         </button>
                     </div>
                 </form>
@@ -907,6 +911,12 @@
             toggleElement('card-view-patients', hasView);
             toggleElement('card-tg-users', hasTG);
             toggleElement('card-pdf-system', hasPDF);
+
+            // Specific TG Actions
+            toggleElement('tab-requests-btn', can('view-recharge'));
+            toggleElement('edit-balance-container', can('edit-balance'));
+            toggleElement('save-balance-btn', can('edit-balance'));
+            toggleElement('withdraw-balance-btn', can('withdraw-balance'));
 
             // Check if any card is visible
             const anyVisible = hasAdd || hasView || hasTG || hasPDF;
