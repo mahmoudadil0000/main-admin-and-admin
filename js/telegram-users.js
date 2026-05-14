@@ -1,5 +1,28 @@
 const db_telegram = firebase.firestore();
 
+// --- Audit Bot Notification ---
+// Writes to 'audit_logs' collection — the SAME collection used by P2P transfers in the bot.
+// The bot (index.js) has a proven working onSnapshot listener on 'audit_logs' that sends via auditBot.
+async function sendAuditNotification(data) {
+    try {
+        await db_telegram.collection('audit_logs').add({
+            type: 'admin_action',
+            typeLabel: data.typeLabel || 'حركة رصيد',
+            targetName: data.targetName || 'غير معروف',
+            targetUsername: data.targetUsername || '',
+            amount: data.amount || 0,
+            newBalance: data.newBalance || 0,
+            actorName: data.actorName || 'النظام',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        console.log("✅ Audit notification written to audit_logs successfully.");
+    } catch (err) {
+        console.error("❌ Failed to write audit notification:", err);
+    }
+}
+
+
+
 function openTelegramUsersModal() {
     const modal = document.getElementById('telegram-users-modal');
     if (modal) {
@@ -187,10 +210,29 @@ if (editTelegramForm) {
                 }
 
                 // Log Transaction
-                // Use 'db' for main admins/admins, 'db_telegram' is for bot users
                 const mainDb = typeof db !== 'undefined' ? db : firebase.firestore();
-                const currentAdminName = firebase.auth().currentUser ? (await mainDb.collection('users').doc(firebase.auth().currentUser.uid).get()).data().username || 'الأدمن' : 'الأدمن';
+                let currentAdminName = 'الأدمن';
+                try {
+                    const authUser = firebase.auth().currentUser;
+                    if (authUser) {
+                        const adminDoc = await mainDb.collection('users').doc(authUser.uid).get();
+                        if (adminDoc.exists) {
+                            currentAdminName = adminDoc.data().username || adminDoc.data().name || 'الأدمن';
+                        }
+                    }
+                } catch (e) { console.warn("Could not get admin name:", e); }
+
                 await logTransaction(id, 'manual', diff, `تعديل يدوي بواسطة (${currentAdminName}): من ${oldBalance.toLocaleString()} إلى ${newBalance.toLocaleString()}`);
+
+                // --- Direct Audit Bot Notification ---
+                await sendAuditNotification({
+                    typeLabel: 'تعديل يدوي (لوحة التحكم)',
+                    targetName: userDoc.data().name || id,
+                    targetUsername: userDoc.data().username || '',
+                    amount: diff,
+                    newBalance: newBalance,
+                    actorName: currentAdminName
+                });
 
                 // --- Notification Logic ---
                 // Write a pending notification to Firestore. The bot (Node.js) will pick it up and send the Telegram message.
@@ -595,46 +637,69 @@ function approveRequest(event, requestId, telegramId, amount) {
     const requestRef = db_telegram.collection('recharge_requests').doc(requestId);
     let newBalance = 0;
 
-    // Use transaction to ensure balance is updated correctly and request is only processed once
-    db_telegram.runTransaction(async (transaction) => {
-        const userDoc = await transaction.get(userRef);
-        const requestDoc = await transaction.get(requestRef);
+    // Resolve admin name BEFORE the transaction so it's accessible everywhere
+    const mainDb = typeof db !== 'undefined' ? db : firebase.firestore();
+    let currentAdminName = 'الأدمن';
 
-        if (!requestDoc.exists) throw "هذا الطلب تمت معالجته بالفعل أو غير موجود! ❌";
-        if (!userDoc.exists) throw "المستخدم غير موجود في النظام! ❌";
+    const resolveAndRun = async () => {
+        try {
+            const authUser = firebase.auth().currentUser;
+            if (authUser) {
+                const adminDoc = await mainDb.collection('users').doc(authUser.uid).get();
+                if (adminDoc.exists) {
+                    currentAdminName = adminDoc.data().username || adminDoc.data().name || 'الأدمن';
+                }
+            }
+        } catch (e) { console.warn("Could not get admin name:", e); }
 
-        const currentBalance = userDoc.data().balance || 0;
-        newBalance = currentBalance + amount;
+        // Use transaction to ensure balance is updated correctly and request is only processed once
+        await db_telegram.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const requestDoc = await transaction.get(requestRef);
 
-        transaction.update(userRef, {
-            balance: newBalance,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            if (!requestDoc.exists) throw "هذا الطلب تمت معالجته بالفعل أو غير موجود! ❌";
+            if (!userDoc.exists) throw "المستخدم غير موجود في النظام! ❌";
+
+            const currentBalance = userDoc.data().balance || 0;
+            newBalance = currentBalance + amount;
+
+            transaction.update(userRef, {
+                balance: newBalance,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            const transRef = db_telegram.collection('transactions').doc();
+            transaction.set(transRef, {
+                telegramId: telegramId,
+                type: 'recharge',
+                amount: amount,
+                details: `تعبئة رصيد بواسطة (${currentAdminName}) عبر طلب (زين كاش/ماستر كارد)`,
+                relatedId: requestId,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Delete the request after approval
+            transaction.delete(requestRef);
         });
 
-        // Log transaction
-        const mainDb = typeof db !== 'undefined' ? db : firebase.firestore();
-        const currentAdminName = firebase.auth().currentUser ? (await mainDb.collection('users').doc(firebase.auth().currentUser.uid).get()).data().username || 'الأدمن' : 'الأدمن';
-        const transRef = db_telegram.collection('transactions').doc();
-        transaction.set(transRef, {
-            telegramId: telegramId,
-            type: 'recharge',
-            amount: amount,
-            details: `تعبئة رصيد بواسطة (${currentAdminName}) عبر طلب (زين كاش/ماستر كارد)`,
-            relatedId: requestId,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        // Delete the request after approval
-        transaction.delete(requestRef);
-    }).then(async () => {
         // Fetch user data for logging and cleanup
         const userDoc = await userRef.get();
         const userData = userDoc.data() || {};
 
         // Log system event for admin activity
         if (window.logSystemEvent) {
-            window.logSystemEvent('balance_update', `قام بقبول طلب شحن لـ @${userData.username || telegramId} بمبلغ ${amount.toLocaleString()}`);
+            window.logSystemEvent('balance_update', `قام (${currentAdminName}) بقبول طلب شحن لـ @${userData.username || telegramId} بمبلغ ${amount.toLocaleString()}`);
         }
+
+        // --- Direct Audit Bot Notification ---
+        await sendAuditNotification({
+            typeLabel: 'قبول طلب تعبئة',
+            targetName: userData.name || telegramId,
+            targetUsername: userData.username || '',
+            amount: amount,
+            newBalance: newBalance,
+            actorName: currentAdminName
+        });
 
         const oldMessageId = userData.lastMessageId;
 
@@ -656,7 +721,9 @@ function approveRequest(event, requestId, telegramId, amount) {
         }
 
         alert('✅ تم قبول الطلب وتحديث الرصيد بنجاح.');
-    }).catch((error) => {
+    };
+
+    resolveAndRun().catch((error) => {
         console.error("Error approving request: ", error);
         alert(error);
         // Re-enable if failed
@@ -708,17 +775,61 @@ async function openWithdrawModal() {
 
     try {
         const userRef = db_telegram.collection('telegram_users').doc(id);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
         const newBalance = currentBalance - amount;
+        const oldMessageId = userData.lastMessageId;
 
         await userRef.update({
             balance: newBalance,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        await logTransaction(id, 'withdrawal', -amount, `سحب مبلغ يدوي من قبل الإدارة`);
+        // Get admin name
+        const mainDb = typeof db !== 'undefined' ? db : firebase.firestore();
+        let currentAdminName = 'الأدمن';
+        try {
+            const authUser = firebase.auth().currentUser;
+            if (authUser) {
+                const adminDoc = await mainDb.collection('users').doc(authUser.uid).get();
+                if (adminDoc.exists) {
+                    currentAdminName = adminDoc.data().username || adminDoc.data().name || 'الأدمن';
+                }
+            }
+        } catch (e) { console.warn("Could not get admin name:", e); }
+
+        await logTransaction(id, 'withdrawal', -amount, `سحب مبلغ يدوي بواسطة (${currentAdminName})`);
+
+        // Log system event
+        const username = userData.username || userData.name || id;
+        if (window.logSystemEvent) {
+            await window.logSystemEvent('balance_update', `قام بسحب مبلغ ${amount.toLocaleString()} من رصيد @${username}`);
+        }
+
+        // --- Audit Bot Notification ---
+        await sendAuditNotification({
+            typeLabel: 'سحب يدوي (لوحة التحكم)',
+            targetName: userData.name || id,
+            targetUsername: userData.username || '',
+            amount: -amount,
+            newBalance: newBalance,
+            actorName: currentAdminName
+        });
+
+        // --- Notify the Telegram user ---
+        const messageText = `📉 تم خصم مبلغ ${amount.toLocaleString()} د.ع من رصيدك.\n\n📊 رصيدك الحالي: ${newBalance.toLocaleString()} د.ع`;
+        await db_telegram.collection('pending_notifications').add({
+            telegramId: id,
+            text: messageText,
+            type: 'balance_withdrawal',
+            cleanupOldMessage: true,
+            oldMessageId: oldMessageId || null,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
         document.getElementById('edit-telegram-balance').value = newBalance;
-        alert("✅ تم سحب المبلغ بنجاح.");
+        alert("✅ تم سحب المبلغ وإرسال إشعار للمستخدم بنجاح.");
 
     } catch (e) {
         console.error("Error withdrawing amount:", e);
