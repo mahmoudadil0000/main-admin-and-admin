@@ -1,46 +1,12 @@
 // Initialize Firestore
 const db = firebase.firestore();
 
-// Protect Page & Enforce Main Admin Role Only
+// Note: Protection is now handled by auth-guard.js. 
+// We just need to start the listeners once auth is ready.
 firebase.auth().onAuthStateChanged((user) => {
-    if (!user) {
-        window.location.href = 'index.html';
-        return;
+    if (user) {
+        updateNotificationBadges();
     }
-
-    // Start Badge Listeners
-    updateNotificationBadges();
-
-    // Check user role in Firestore 'users' collection
-    db.collection('users').doc(user.uid).get().then((doc) => {
-        if (doc.exists) {
-            const userData = doc.data();
-            // Role check: Only main_admin can access. 
-            // Note: The UI doesn't expose the word "main_admin" to users, it's just "System Dashboard"
-            if (userData.role !== 'main_admin') {
-                window.location.href = 'admin.html';
-            }
-        } else {
-            // Fallback: If no Firestore doc exists, let's use the hardcoded email from earlier instructions
-            if (user.email === 'mahmod.adil2001@gmail.com') {
-                // Auto-create the main_admin document so Firestore Security Rules pass in the future
-                db.collection('users').doc(user.uid).set({
-                    name: 'Main Admin',
-                    email: user.email,
-                    role: 'main_admin',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }).catch(err => console.error("Could not auto-create admin doc (rules might be blocking it):", err));
-            } else {
-                window.location.href = 'admin.html';
-            }
-        }
-    }).catch(err => {
-        console.error("Error fetching user role:", err);
-        // Fallback check
-        if (user.email !== 'mahmod.adil2001@gmail.com') {
-            window.location.href = 'admin.html';
-        }
-    });
 });
 
 // Logout
@@ -466,11 +432,22 @@ let currentUserLastSeen = null;
 
 function updateNotificationBadges() {
     const user = firebase.auth().currentUser;
-    if (!user) return;
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-    // Listen to current user's 'lastSeen' data
+    // Listen to current user's data
     db.collection('users').doc(user.uid).onSnapshot(userDoc => {
         if (userDoc.exists) {
+            window.currentUserData = userDoc.data(); // Fix for patients.js modal authentication timeout
+            
+            // SECURITY REDIRECT: if not main_admin, redirect to index
+            if (window.currentUserData.role !== 'main_admin') {
+                window.location.href = 'index.html';
+                return;
+            }
+
             currentUserLastSeen = userDoc.data().lastSeen || {};
             // Trigger badge updates when seen data changes
             refreshAllBadges();
