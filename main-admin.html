@@ -238,14 +238,17 @@
     <div id="edit-admin-modal"
         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
         <div
-            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center">
+            class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
+            <!-- Sticky Header — always visible, never disappears -->
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0 relative z-10 bg-white dark:bg-zinc-800">
                 <h2 class="text-xl font-bold">Edit Admin</h2>
-                <button onclick="closeEditAdmin()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
-                    <i class="fa-solid fa-xmark text-xl"></i>
+                <button id="edit-admin-close-btn" type="button" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl pointer-events-none"></i>
                 </button>
             </div>
-            <div class="p-6">
+
+            <!-- Scrollable Body -->
+            <div class="p-6 overflow-y-auto flex-1">
                 <form id="edit-admin-form" class="flex flex-col gap-4">
                     <input type="hidden" id="edit-admin-id">
                     <div>
@@ -276,7 +279,18 @@
                     </div>
                 </form>
 
-                <!-- Admin Activity Log (New) -->
+                <!-- Permissions Section -->
+                <div id="permissions-section" class="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-700 hidden">
+                    <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-blue-500"></i>
+                        الصلاحيات (Permissions)
+                    </h3>
+                    <div id="permissions-toggles" class="flex flex-col gap-2">
+                        <!-- Dynamically populated by dashboard.js -->
+                    </div>
+                </div>
+
+                <!-- Admin Activity Log -->
                 <div class="mt-8 pt-6 border-t border-gray-100 dark:border-zinc-700">
                     <h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">النشاط الأخير (Recent
                         Activity)</h3>
