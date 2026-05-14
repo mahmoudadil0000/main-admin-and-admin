@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <title>نظام إدارة بيانات المرضى - PDF الذكي</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap');
+
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f0f4f8;
+            --page-bg: #ffffff;
+            --success-color: #27ae60;
+            --text-dark: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #eef2f7;
+            --sidebar-width: 280px;
+            --toolbar-height: 60px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+
+
+        /* Toolbar */
+        .toolbar {
+            background: #ffffff;
+            height: auto;
+            min-height: var(--toolbar-height);
+            padding: env(safe-area-inset-top) 15px 5px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            z-index: 1000;
+            border-bottom: 1px solid #d1d5db;
+            flex-shrink: 0;
+            gap: 5px;
+        }
+
+
+        .toolbar-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .toolbar-title {
+            margin: 0;
+            font-size: 16px;
+            color: var(--text-dark);
+            font-weight: 800;
+        }
+
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Tajawal', sans-serif;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #d1d5db;
+        }
+
+        .page-indicator {
+            background: #f1f5f9;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #64748b;
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-left: 1px solid #d1d5db;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 900;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(100%);
+            position: absolute;
+            height: 100%;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .thumb-list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .thumbnail-item {
+            padding: 12px;
+            border: 2px solid #f3f4f6;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #fff;
+            position: relative;
+        }
+
+        .thumbnail-item.active {
+            border-color: var(--accent-color);
+            background: #f0f9ff;
+        }
+
+        .page-tag {
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: var(--primary-color);
+            color: white;
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 800;
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .status-badge.saved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .thumbnail-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 5px;
+        }
+
+        /* Viewport */
+        .viewport {
+            flex: 1;
+            overflow-y: scroll;
+            scroll-behavior: smooth;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .page-container {
+            width: 100%;
+            max-width: 850px;
+            min-height: calc(100vh - var(--toolbar-height));
+            background: #fff;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2px;
+        }
+
+        .page-modes-wrapper {
+            padding: 40px 60px;
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Edit Mode Styles */
+        .edit-mode {
+            display: none;
+        }
+
+        .edit-mode.active-mode {
+            display: block !important;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #64748b;
+        }
+
+        .field-box,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #eef2f7;
+            border-radius: 8px;
+            min-height: 44px;
+            background-color: #fcfdfe;
+            font-size: 14px;
+            font-family: 'Tajawal', sans-serif;
+            outline: none;
+            transition: 0.2s;
+            color: #334155;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: left 12px center;
+        }
+
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 2px solid #eef2f7;
+            background: #fcfdfe;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .chip.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        /* Gallery Edit */
+        .upload-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .upload-item {
+            position: relative;
+            aspect-ratio: 1.2;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        .upload-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-img {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-photo-btn {
+            aspect-ratio: 1.2;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 11px;
+            background: #fcfdfe;
+        }
+
+        /* VIEW MODE */
+        .view-mode {
+            display: none;
+        }
+
+        .view-mode.active-mode {
+            display: block !important;
+        }
+
+        .report-frame {
+            border: 1px solid #d1d5db;
+            padding: 25px;
+            position: relative;
+            background: linear-gradient(to bottom, #ffffff 0%, #fcfdfe 100%);
+        }
+
+        .report-frame::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 1px solid #2c3e50;
+            pointer-events: none;
+            opacity: 0.05;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--primary-color);
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 4px;
+        }
+
+        .premium-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .premium-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .premium-label {
+            font-size: 9px;
+            font-weight: 900;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .premium-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2c3e50;
+            padding: 2px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag-pill {
+            padding: 2px 8px;
+            background: #f0f4f8;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .premium-notes {
+            background: #fff;
+            border: 1px solid #eef2f7;
+            padding: 12px;
+            border-radius: 10px;
+            line-height: 1.5;
+            font-size: 13px;
+            color: #34495e;
+            box-shadow: inset 4px 0 0 var(--accent-color);
+            margin-bottom: 20px;
+            min-height: 80px;
+        }
+
+        .gallery-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .gallery-item-premium {
+            aspect-ratio: 1.2;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eef2f7;
+        }
+
+        .gallery-item-premium img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .report-footer-premium {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 15px;
+        }
+
+        .signature-block {
+            text-align: center;
+            border-top: 1px solid #d1d5db;
+            padding-top: 5px;
+            width: 100px;
+            font-size: 9px;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+
+        .stamp-circle {
+            width: 45px;
+            height: 45px;
+            border: 2px double var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            color: var(--accent-color);
+            font-weight: 900;
+            opacity: 0.3;
+            transform: rotate(-15deg);
+        }
+
+        /* Action UI */
+        .action-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-edit-small {
+            padding: 4px 10px;
+            font-size: 10px;
+            border-radius: 15px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-save-small {
+            padding: 4px 12px;
+            font-size: 10px;
+            border-radius: 15px;
+            background: var(--success-color);
+            color: white;
+        }
+
+        .jump-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: none;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+            
+            .toolbar-title {
+                font-size: 14px !important;
+                white-space: nowrap;
+            }
+
+            .hide-mobile {
+                display: none;
+            }
+
+            .btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .page-indicator {
+                padding: 4px 10px;
+                font-size: 10px;
+            }
+
+            .page-container {
+                border-radius: 0;
+                box-shadow: none;
+                border-bottom: 1px solid #e2e8f0;
+                min-height: calc(100vh - var(--toolbar-height));
+            }
+...
+
+
+        @media print {
+
+            .toolbar,
+            .sidebar,
+            .no-print,
+            .action-overlay,
+            .jump-btn {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                overflow: visible;
+            }
+
+            .viewport {
+                overflow: visible;
+                display: block;
+                height: auto;
+            }
+
+            .page-container {
+                box-shadow: none;
+                height: auto;
+                min-height: auto;
+                page-break-after: always;
+            }
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 40px;
+            font-weight: bold;
+            z-index: 2000;
+            display: none;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="toolbar no-print">
+        <div class="toolbar-group">
+            <button class="btn btn-secondary" onclick="toggleSidebar()" style="padding: 8px 12px;">☰</button>
+            <button class="btn btn-secondary" onclick="handleBackButtonClick()" title="العودة">
+                <i class="fa-solid fa-arrow-right"></i> <span class="hide-mobile">العودة</span>
+            </button>
+            <h2 class="toolbar-title">سجل المرضى</h2>
+        </div>
+        <div class="toolbar-group">
+            <div class="page-indicator" id="pageInfo">1 / 1</div>
+            <button id="addPageBtn" class="btn btn-primary" onclick="addNewPage()">+ إضافة</button>
+        </div>
+    </div>
+
+
+    <div class="main-container">
+        <div class="sidebar hidden" id="sidebar">
+            <div class="sidebar-header">
+                <h3 style="margin:0">سجل المرضى</h3>
+                <button class="btn btn-secondary btn-small" onclick="toggleSidebar()">✕</button>
+            </div>
+            <div class="thumb-list-container" id="thumbListContainer">
+                <div id="thumbList"></div>
+            </div>
+        </div>
+
+        <div class="viewport" id="viewport"></div>
+    </div>
+
+    <button id="jumpBtn" class="jump-btn" onclick="jumpToLastPage()">
+        <span>⬇</span> العودة لآخر صفحة
+    </button>
+
+    <div id="toast"></div>
+
+    <script>
+        const MAX_IMAGES = 6;
+        let pages = [];
+        let currentIndex = 0;
+        let lastSavedPages = [];
+
+        const PROVINCES = ["بغداد", "البصرة", "نينوى", "أربيل", "النجف", "كربلاء", "ذي قار", "بابل", "السليمانية", "الأنبار", "ديالى", "كركوك", "صلاح الدين", "المثنى", "ميسان", "واسط", "دهوك", "القادسية"];
+        const DAYS = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
+        const CASES = ["اورثو", "بيدو", "مدسن", "بروس", "بريو", "اوبرتف", "اكزو"];
+
+        function init() {
+            const saved = localStorage.getItem('patient_pdf_data_v5');
+            if (saved) {
+                try {
+                    pages = JSON.parse(saved);
+                    pages = pages.map(p => {
+                        if (!Array.isArray(p.days)) p.days = p.day ? [p.day] : [];
+                        if (!Array.isArray(p.cases)) p.cases = p.caseType ? [p.caseType] : [];
+                        if (!p.images) p.images = [];
+                        return p;
+                    });
+                    lastSavedPages = JSON.parse(JSON.stringify(pages));
+                } catch (e) { pages = []; }
+            }
+            if (pages.length === 0) pages.push(createNewPageData());
+
+            currentIndex = pages.length - 1;
+            renderAllPages();
+
+            setTimeout(() => {
+                const lastPage = document.getElementById(`page-${currentIndex}`);
+                if (lastPage) lastPage.scrollIntoView({ behavior: 'auto' });
+                document.getElementById('pageInfo').innerText = `${pages.length} / ${pages.length}`;
+            }, 150);
+
+            setupScrollSpy();
+        }
+
+        function createNewPageData() {
+            return { id: Date.now(), name: '', phone: '', province: '', city: '', days: [], cases: [], notes: '', images: [], isSaved: false, isEditMode: true };
+        }
+
+        function isPageEmpty(idx) {
+            const p = pages[idx];
+            if (!p) return true;
+            return !p.name.trim() && !p.phone.trim() && !p.province.trim() && !p.city.trim() && p.days.length === 0 && p.cases.length === 0 && !p.notes.trim() && p.images.length === 0;
+        }
+
+        function renderAllPages() {
+            const viewport = document.getElementById('viewport');
+            viewport.innerHTML = '';
+
+            pages.forEach((page, index) => {
+                const pageEl = document.createElement('div');
+                pageEl.className = 'page-container';
+                pageEl.id = `page-${index}`;
+
+                const isEmpty = isPageEmpty(index);
+                const safeDays = Array.isArray(page.days) ? page.days : [];
+                const safeCases = Array.isArray(page.cases) ? page.cases : [];
+
+                pageEl.innerHTML = `
+                    <div class="action-overlay no-print">
+                        ${!page.isEditMode ?
+                        `<button class="btn btn-edit-small" onclick="setEditMode(${index}, true)">✏️ تعديل</button>` :
+                        `<button id="save-btn-${index}" class="btn btn-save-small" onclick="savePage(${index})">💾 حفظ</button>`
+
+                    }
+                        <button class="btn btn-danger btn-small" onclick="deletePage(${index})" title="حذف">🗑</button>
+                    </div>
+                    
+                    <div class="page-modes-wrapper">
+                        <div class="edit-mode ${page.isEditMode ? 'active-mode' : ''}">
+                            <h2 style="margin-bottom:20px; font-weight:900; font-size:18px">تعديل البيانات</h2>
+                            <div class="form-row">
+                                <div class="form-group"><label>الاسم</label><input type="text" class="field-box" value="${page.name}" oninput="updateData(${index}, 'name', this.value)"></div>
+                                <div class="form-group"><label>الهاتف</label><input type="text" class="field-box" value="${page.phone}" oninput="updateData(${index}, 'phone', this.value)"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>المحافظة</label>
+                                    <select onchange="updateData(${index}, 'province', this.value)">
+                                        <option value="" disabled ${!page.province ? 'selected' : ''}>اختر...</option>
+                                        ${PROVINCES.map(p => `<option value="${p}" ${page.province === p ? 'selected' : ''}>${p}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>المنطقة</label><input type="text" class="field-box" value="${page.city}" oninput="updateData(${index}, 'city', this.value)"></div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:15px">
+                                <label>الأيام</label>
+                                <div class="chip-group">
+                                    <div class="chip ${safeDays.length === DAYS.length ? 'active' : ''}" onclick="toggleAllDays(${index})">الكل</div>
+                                    ${DAYS.map(d => `<div class="chip ${safeDays.includes(d) ? 'active' : ''}" onclick="toggleChip(${index}, 'days', '${d}')">${d}</div>`).join('')}
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:15px">
+                                <label>الحالة</label>
+                                <div class="chip-group">
+                                    ${CASES.map(c => `<div class="chip ${safeCases.includes(c) ? 'active' : ''}" onclick="toggleChip(${index}, 'cases', '${c}')">${c}</div>`).join('')}
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-bottom:15px">
+                                <label>الملاحظات</label>
+                                <textarea class="field-box" style="min-height:80px; resize:none" oninput="updateData(${index}, 'notes', this.value)">${page.notes}</textarea>
+                            </div>
+                            <label>الصور (${page.images.length}/${MAX_IMAGES})</label>
+                            <div class="upload-grid">
+                                ${page.images.map((img, imgIdx) => `
+                                    <div class="upload-item">
+                                        <img src="${img}">
+                                        <button class="remove-img" onclick="removeImage(${index}, ${imgIdx})">×</button>
+                                    </div>
+                                `).join('')}
+                                ${page.images.length < MAX_IMAGES ? `<div class="add-photo-btn" onclick="triggerUpload(${index})"><span>+</span>صورة</div>` : ''}
+                            </div>
+                            <input type="file" id="upload-${index}" style="display:none" accept="image/*" multiple onchange="handleUpload(event, ${index})">
+                        </div>
+
+                        <div class="view-mode ${!page.isEditMode ? 'active-mode' : ''}">
+                            <div class="report-frame">
+                                <!-- Cleaned Header: Removed icon, title, id/date, and first section title -->
+
+                                <div class="premium-grid" style="margin-top:20px">
+                                    <div class="premium-item"><div class="premium-label">الاسم</div><div class="premium-value">${page.name || '-'}</div></div>
+                                    <div class="premium-item"><div class="premium-label">الهاتف</div><div class="premium-value">${page.phone || '-'}</div></div>
+                                    <div class="premium-item"><div class="premium-label">الموقع</div><div class="premium-value">${page.province || ''} - ${page.city || ''}</div></div>
+                                </div>
+
+                                <div class="section-title">📅 المواعيد والحالة</div>
+                                <div class="premium-grid">
+                                    <div class="premium-item">
+                                        <div class="premium-label">الأيام</div>
+                                        <div class="tags-container">
+                                            ${safeDays.length === DAYS.length ? '<span class="tag-pill">جميع الأيام</span>' :
+                        (safeDays.length > 0 ? safeDays.map(d => `<span class="tag-pill">${d}</span>`).join('') : '-')}
+                                        </div>
+                                    </div>
+                                    <div class="premium-item">
+                                        <div class="premium-label">الحالة</div>
+                                        <div class="tags-container">
+                                            ${safeCases.length > 0 ? safeCases.map(c => `<span class="tag-pill" style="background:#e0f2fe">${c}</span>`).join('') : '-'}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="section-title">📝 ملاحظات</div>
+                                <div class="premium-notes">${page.notes || '-'}</div>
+
+                                <div class="section-title">🖼 الصور</div>
+                                <div class="gallery-grid-premium">
+                                    ${page.images.length > 0 ? page.images.map(img => `
+                                        <div class="gallery-item-premium">
+                                            <img src="${img}" onclick="window.open('${img}')">
+                                        </div>`).join('') : '-'}
+                                </div>
+
+                                <div class="report-footer-premium">
+                                    <div class="stamp-circle">VALIDATED</div>
+                                    <div class="signature-block">توقيع الطبيب</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                viewport.appendChild(pageEl);
+            });
+
+            updateAddButtons();
+            renderThumbnails();
+        }
+
+        function updateData(idx, field, val) {
+            if (!pages[idx]) return;
+            pages[idx][field] = val;
+            const saveBtn = document.getElementById(`save-btn-${idx}`);
+            if (saveBtn) saveBtn.disabled = false;
+
+            renderThumbnails();
+        }
+
+        function toggleChip(pIdx, field, val) {
+            if (!pages[pIdx]) return;
+            const arr = pages[pIdx][field];
+            const index = arr.indexOf(val);
+            if (index > -1) arr.splice(index, 1);
+            else arr.push(val);
+            renderAllPages();
+        }
+
+        function toggleAllDays(pIdx) {
+            if (!pages[pIdx]) return;
+            if (pages[pIdx].days.length === DAYS.length) pages[pIdx].days = [];
+            else pages[pIdx].days = [...DAYS];
+            renderAllPages();
+        }
+
+        function savePage(idx) {
+            // Allow saving empty pages if the user wants to keep a placeholder
+
+            pages[idx].isSaved = true;
+            pages[idx].isEditMode = false;
+            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+
+            lastSavedPages = JSON.parse(JSON.stringify(pages));
+            renderAllPages();
+            showToast("تم الحفظ!");
+        }
+
+        function setEditMode(idx, mode) {
+            if (!pages[idx]) return;
+            if (mode) {
+                const otherEditIdx = pages.findIndex((p, i) => i !== idx && p.isEditMode);
+                if (otherEditIdx > -1) {
+
+                    const baseline = lastSavedPages[otherEditIdx];
+                    const hasChanged = !baseline || JSON.stringify(pages[otherEditIdx]) !== JSON.stringify(baseline);
+                    
+                    if (hasChanged && !isPageEmpty(otherEditIdx)) {
+                        const confirmSave = confirm(`هناك تعديلات غير محفوظة في الصفحة ${otherEditIdx + 1}. هل تريد حفظها؟`);
+                        if (confirmSave) {
+                            savePage(otherEditIdx);
+                        } else if (baseline) {
+                            // Revert to baseline
+                            pages[otherEditIdx] = JSON.parse(JSON.stringify(baseline));
+                        }
+                        // If it was a new page (no baseline) and user said "No" to save, we just keep it as is but exit edit mode
+                    } else if (hasChanged && isPageEmpty(otherEditIdx) && baseline) {
+                        // If it's empty but had a baseline, revert to baseline
+                        pages[otherEditIdx] = JSON.parse(JSON.stringify(baseline));
+                    }
+                    
+                    pages[otherEditIdx].isEditMode = false;
+                }
+
+            }
+            pages[idx].isEditMode = mode;
+            renderAllPages();
+        }
+
+        function deletePage(idx) {
+            if (pages.length <= 1) return;
+            if (confirm("حذف السجل؟")) {
+                pages.splice(idx, 1);
+                localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+                lastSavedPages = JSON.parse(JSON.stringify(pages));
+                renderAllPages();
+            }
+        }
+
+        function addNewPage() {
+            const last = pages[pages.length - 1];
+            // Allow adding if last is saved OR if last is empty (effectively a placeholder)
+            if (last && !last.isSaved && !isPageEmpty(pages.length - 1)) { 
+                showToast("أكمل حفظ المريض الحالي أولاً"); 
+                return; 
+            }
+            
+            // If the last page is empty and unsaved, we don't need to add another one, just use it
+            if (last && !last.isSaved && isPageEmpty(pages.length - 1)) {
+                showToast("استخدم الصفحة الحالية الفارغة");
+                const el = document.getElementById(`page-${pages.length - 1}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            const newPage = createNewPageData();
+            pages.push(newPage);
+            // Save to localStorage immediately so it persists
+            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+            lastSavedPages[pages.length - 1] = JSON.parse(JSON.stringify(newPage));
+            renderAllPages();
+
+
+            setTimeout(() => { const el = document.getElementById(`page-${pages.length - 1}`); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
+        }
+
+        function triggerUpload(idx) { document.getElementById(`upload-${idx}`).click(); }
+
+        async function handleUpload(e, idx) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            const limit = MAX_IMAGES - pages[idx].images.length;
+            let filesToProcess = Math.min(files.length, limit);
+            if (filesToProcess <= 0) return;
+
+            showToast("جاري رفع الصور...");
+            
+            for (let i = 0; i < filesToProcess; i++) {
+                try {
+                    const formData = new FormData();
+                    formData.append('file', files[i]);
+                    formData.append('upload_preset', 'patient');
+                    formData.append('folder', 'patients');
+                    
+                    const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/dpda74vzy/image/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const cloudinaryData = await cloudinaryRes.json();
+                    
+                    if (cloudinaryData.secure_url) {
+                        pages[idx].images.push(cloudinaryData.secure_url);
+                        renderAllPages();
+                    }
+                } catch (err) {
+                    console.error("Cloudinary Error:", err);
+                    showToast("فشل رفع إحدى الصور");
+                }
+            }
+            showToast("تم رفع الصور بنجاح");
+            e.target.value = '';
+        }
+
+        function removeImage(pIdx, iIdx) { if (pages[pIdx]) { pages[pIdx].images.splice(iIdx, 1); renderAllPages(); } }
+        function renderThumbnails() {
+            const list = document.getElementById('thumbList');
+            list.innerHTML = '';
+            pages.forEach((p, i) => {
+                const item = document.createElement('div');
+                item.className = `thumbnail-item ${i === currentIndex ? 'active' : ''}`;
+                item.onclick = () => { const el = document.getElementById(`page-${i}`); if (el) el.scrollIntoView({ behavior: 'smooth' }); };
+                item.innerHTML = `<div class="page-tag">صفحة ${i + 1}</div><div class="status-badge ${p.isSaved ? 'saved' : ''}">${p.isSaved ? 'نهائي' : 'مسودة'}</div><div class="thumbnail-title">${p.name || 'سجل جديد'}</div>`;
+                list.appendChild(item);
+            });
+        }
+        function jumpToLastPage() { const lastPage = document.getElementById(`page-${pages.length - 1}`); if (lastPage) lastPage.scrollIntoView({ behavior: 'smooth' }); }
+
+        function setupScrollSpy() {
+            const viewport = document.getElementById('viewport');
+            viewport.onscroll = () => {
+                const children = viewport.children;
+                let active = 0;
+                for (let i = 0; i < children.length; i++) {
+                    const rect = children[i].getBoundingClientRect();
+                    if (rect.top < window.innerHeight / 2 && rect.bottom > window.innerHeight / 2) { active = i; break; }
+                }
+                if (active !== currentIndex) {
+                    currentIndex = active;
+                    document.getElementById('pageInfo').innerText = `${currentIndex + 1} / ${pages.length}`;
+                    document.querySelectorAll('.thumbnail-item').forEach((item, idx) => { item.classList.toggle('active', idx === active); });
+                }
+                const jumpBtn = document.getElementById('jumpBtn');
+                if (currentIndex < pages.length - 1) jumpBtn.style.display = 'flex';
+                else jumpBtn.style.display = 'none';
+            };
+        }
+
+        function updateAddButtons() {
+            const last = pages[pages.length - 1];
+            const btn = document.getElementById('addPageBtn');
+            if (btn) btn.disabled = last && !last.isSaved;
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); }
+        function showToast(msg) { const t = document.getElementById('toast'); if (t) { t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); } }
+
+        function handleBackButtonClick() {
+            const source = sessionStorage.getItem('pdf_source');
+            if (source) {
+                window.location.href = source;
+            } else if (document.referrer && (document.referrer.includes('admin.html') || document.referrer.includes('main-admin.html'))) {
+                window.history.back();
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
