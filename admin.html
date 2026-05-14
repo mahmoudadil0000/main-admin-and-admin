@@ -18,6 +18,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <!-- firebase-config.js MUST load before auth-guard.js to initialize Firebase -->
+    <script src="js/core.js"></script>
     
     <style>
         .card-hover {
@@ -57,12 +59,17 @@
         </div>
     </nav>
 
+    <!-- Debug Badge (Optional, but very helpful) -->
+    <div id="debug-role-badge" class="fixed top-20 right-4 z-[9999] px-3 py-1 bg-black/80 text-white text-[10px] font-black rounded-full pointer-events-none uppercase tracking-tighter">
+        Loading Role...
+    </div>
+
     <!-- Main Content Grid -->
     <main class="p-4 md:p-8 max-w-5xl mx-auto flex-1 w-full">
         
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl mx-auto">
             <!-- Add Patient Card -->
-            <div onclick="openAddPatientModal()" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full">
+            <div id="card-add-patient" onclick="openAddPatientModal()" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full hidden">
                 <div class="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center mb-4 text-xl">
                     <i class="fa-solid fa-hospital-user"></i>
                 </div>
@@ -71,7 +78,7 @@
             </div>
 
             <!-- Patient Info Card -->
-            <div onclick="openPatientInfoModal()" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full">
+            <div id="card-view-patients" onclick="openPatientInfoModal()" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full hidden">
                 <div class="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-4 text-xl">
                     <i class="fa-solid fa-notes-medical"></i>
                 </div>
@@ -80,13 +87,39 @@
             </div>
 
             <!-- Telegram Users Card -->
-            <div onclick="openTelegramUsersModal()" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full">
+            <div id="card-tg-users" onclick="openTelegramUsersModal()" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full hidden">
                 <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-4 text-xl">
                     <i class="fa-brands fa-telegram"></i>
                 </div>
                 <h2 class="font-bold text-sm md:text-base mb-1" data-i18n="telegram-users">Telegram Users</h2>
                 <p class="text-xs text-gray-500 dark:text-gray-400 hidden md:block" data-i18n="telegram-users-desc">Manage bot users & balances</p>
             </div>
+
+            <!-- Patient PDF System Card -->
+            <div id="card-pdf-system" onclick="sessionStorage.setItem('pdf_source', 'admin.html'); window.location.href='patient_pdf_system.html'" class="card-hover bg-white dark:bg-zinc-800 rounded-2xl p-4 md:p-6 flex flex-col items-center justify-center cursor-pointer border border-gray-100 dark:border-zinc-700 aspect-square text-center max-w-sm mx-auto w-full hidden">
+                <div class="w-12 h-12 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4 text-xl">
+                    <i class="fa-solid fa-file-pdf"></i>
+                </div>
+                <h2 class="font-bold text-sm md:text-base mb-1">Patient PDF System</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400 hidden md:block">نظام سجلات المرضى الذكي</p>
+            </div>
+        </div>
+
+        <!-- No Access Message -->
+        <div id="no-access-msg" class="hidden text-center py-20 animate-fade-in-up">
+            <div class="w-20 h-20 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                <i class="fa-solid fa-lock text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-black text-gray-400 mb-2">No Active Permissions</h3>
+            <p class="text-sm text-gray-500">You don't have access to any dashboard features yet.<br/>Please contact the system administrator.</p>
+        </div>
+
+        <!-- Fatal Error Message (For debugging) -->
+        <div id="fatal-error-msg" class="hidden p-6 m-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 font-bold text-sm">
+            <h3 class="font-black uppercase tracking-tighter mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Authentication Error</h3>
+            <p id="error-details" class="font-mono text-xs opacity-80 break-words"></p>
+            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-black uppercase">Try Again</button>
+        </div>
         </div>
     </main>
 
@@ -94,7 +127,13 @@
     <div id="add-patient-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] hidden flex items-center justify-center p-4">
         <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0">
-                <h2 class="text-xl font-bold" data-i18n="add-patient">Add Patient</h2>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-bold" data-i18n="add-patient">Add Patient</h2>
+                    <button onclick="openImportPdfModal()" type="button" class="px-3 py-1 bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded-lg text-[10px] font-black uppercase tracking-wider border border-rose-100 dark:border-rose-800 hover:bg-rose-100 transition-colors flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-import"></i>
+                        <span>Import from PDF</span>
+                    </button>
+                </div>
                 <button onclick="closeAddPatientModal()" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">
                     <i class="fa-solid fa-xmark text-xl"></i>
                 </button>
@@ -651,45 +690,87 @@
     </div>
 
     <!-- App Scripts -->
-    <script src="js/i18n.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/utils.js"></script>
+    
     <script>
         const db = firebase.firestore();
 
-        // Protect Page & Enforce Admin Role
+        // -----------------------------------------------------
+        // AUTH & PERMISSIONS LOGIC
+        // -----------------------------------------------------
         firebase.auth().onAuthStateChanged((user) => {
             if (!user) {
                 window.location.href = 'index.html';
                 return;
             }
 
-            // Verify they have admin access
-            db.collection('users').doc(user.uid).get().then((doc) => {
+            // Real-time Permission Listener
+            db.collection('users').doc(user.uid).onSnapshot(doc => {
                 if (doc.exists) {
                     const userData = doc.data();
+                    window.currentUserData = userData; // Store globally for can() function
+
+                    // 1. Role-based Redirection
                     if (userData.role === 'main_admin') {
-                        // Main admins shouldn't be here, send them to their dashboard
                         window.location.href = 'main-admin.html';
-                    } else if (userData.role !== 'admin') {
-                        // Unauthorized
-                        firebase.auth().signOut();
+                        return;
                     }
+                    
+                    if (userData.role !== 'admin') {
+                        firebase.auth().signOut().then(() => window.location.href = 'index.html');
+                        return;
+                    }
+
+                    // 2. Debug Badge
+                    const badge = document.getElementById('debug-role-badge');
+                    if (badge) badge.innerText = "ROLE: ADMIN";
+
+                    // 3. UI Gating
+                    enforcePermissionsUI();
+
                 } else {
-                    // Fallback local test
-                    if (user.email === 'mahmod.adil2001@gmail.com') {
-                        window.location.href = 'main-admin.html';
-                    } else {
-                        // Account was deleted from database by Main Admin!
-                        firebase.auth().signOut().then(() => {
-                            window.location.href = 'index.html';
-                        });
-                    }
+                    console.error("[Admin] No Firestore record found for this UID.");
+                    const badge = document.getElementById('debug-role-badge');
+                    if (badge) badge.innerText = "NO DB RECORD";
                 }
-            }).catch(err => {
-                console.error("Error verifying role:", err);
+
+            }, (err) => {
+                console.error("[Admin] Firestore Listener Error:", err);
+                showFatalError("Firestore Error: " + err.message);
             });
         });
+
+        function showFatalError(msg) {
+            const el = document.getElementById('fatal-error-msg');
+            const details = document.getElementById('error-details');
+            if (el && details) {
+                el.classList.remove('hidden');
+                details.innerText = msg;
+            }
+        }
+
+        function enforcePermissionsUI() {
+            // Dashboard Cards
+            const hasAdd = can('add-patient');
+            const hasView = can('view-patients');
+            const hasTG = can('tg-users');
+
+            toggleElement('card-add-patient', hasAdd);
+            toggleElement('card-view-patients', hasView);
+            toggleElement('card-tg-users', hasTG);
+            toggleElement('card-pdf-system', hasView); // Shared with view-patients
+
+            // Check if any card is visible
+            const anyVisible = hasAdd || hasView || hasTG;
+            toggleElement('no-access-msg', !anyVisible);
+        }
+
+        function toggleElement(id, show) {
+            const el = document.getElementById(id);
+            if (el) {
+                if (show) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            }
+        }
 
         // Logout
         document.getElementById('logout-btn').addEventListener('click', () => {
