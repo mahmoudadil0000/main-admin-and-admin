@@ -2,7 +2,7 @@ const db_telegram = firebase.firestore();
 
 function openTelegramUsersModal() {
     const modal = document.getElementById('telegram-users-modal');
-    if(modal) {
+    if (modal) {
         modal.classList.remove('hidden');
         loadTelegramUsers();
     }
@@ -10,7 +10,7 @@ function openTelegramUsersModal() {
 
 function closeTelegramUsersModal() {
     const modal = document.getElementById('telegram-users-modal');
-    if(modal) {
+    if (modal) {
         modal.classList.add('hidden');
     }
 }
@@ -26,12 +26,12 @@ document.addEventListener('click', (e) => {
 function loadTelegramUsers() {
     const tbody = document.getElementById('telegram-users-body');
     if (!tbody) return;
-    
+
     tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</td></tr>';
-    
+
     window.allTelegramUsers = [];
     window.currentTelegramFilter = 'all';
-    
+
     db_telegram.collection('telegram_users').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         window.allTelegramUsers = [];
         snapshot.forEach(doc => {
@@ -45,11 +45,11 @@ function loadTelegramUsers() {
 }
 function filterTelegramUsers(filter) {
     window.currentTelegramFilter = filter;
-    
+
     // Update UI buttons
     const filters = ['all', 'with-points', 'no-points'];
     const ids = { 'all': 'filter-all', 'with-points': 'filter-points', 'no-points': 'filter-no-points' };
-    
+
     filters.forEach(f => {
         const btn = document.getElementById(ids[f]);
         if (f === filter) {
@@ -62,7 +62,7 @@ function filterTelegramUsers(filter) {
             }
         }
     });
-    
+
     renderTelegramUsers();
 }
 
@@ -70,7 +70,7 @@ function renderTelegramUsers() {
     const tbody = document.getElementById('telegram-users-body');
     if (!tbody) return;
     tbody.innerHTML = '';
-    
+
     const filtered = (window.allTelegramUsers || []).filter(user => {
         if (window.currentTelegramFilter === 'with-points') return (user.balance || 0) > 0;
         if (window.currentTelegramFilter === 'no-points') return (user.balance || 0) <= 0;
@@ -86,14 +86,14 @@ function renderTelegramUsers() {
         const id = user.id;
         const tr = document.createElement('tr');
         tr.className = 'border-b border-gray-100 dark:border-zinc-800 last:border-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors cursor-pointer';
-        
+
         const safeName = (user.name || 'N/A').replace(/'/g, "\\'");
         const safeUsername = (user.username || 'N/A').replace(/'/g, "\\'");
         const tgId = user.telegramId || 'N/A';
         const balance = user.balance || 0;
-        
+
         tr.onclick = () => openEditTelegramModal(id, safeUsername, safeName, tgId, balance);
-        
+
         tr.innerHTML = `
             <td class="px-4 py-4 text-blue-600 dark:text-blue-400 font-bold">
                 <div class="flex items-center justify-between">
@@ -128,16 +128,16 @@ function openEditTelegramModal(id, username, name, tgid, balance) {
     document.getElementById('edit-telegram-name').textContent = name;
     document.getElementById('edit-telegram-tgid').textContent = tgid;
     document.getElementById('edit-telegram-balance').value = balance;
-    
+
     const modal = document.getElementById('edit-telegram-modal');
-    if(modal) {
+    if (modal) {
         modal.classList.remove('hidden');
     }
 }
 
 function closeEditTelegramModal() {
     const modal = document.getElementById('edit-telegram-modal');
-    if(modal) {
+    if (modal) {
         modal.classList.add('hidden');
     }
 }
@@ -152,13 +152,13 @@ document.addEventListener('click', (e) => {
 
 // Handle manual balance edit form submission
 const editTelegramForm = document.getElementById('edit-telegram-form');
-if(editTelegramForm) {
+if (editTelegramForm) {
     editTelegramForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-telegram-id').value;
         const newBalance = parseFloat(document.getElementById('edit-telegram-balance').value);
-        
-        if(!isNaN(newBalance)) {
+
+        if (!isNaN(newBalance)) {
             const btn = editTelegramForm.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
             btn.disabled = true;
@@ -169,7 +169,7 @@ if(editTelegramForm) {
             try {
                 const userDoc = await userRef.get();
                 if (!userDoc.exists) throw "User not found";
-                
+
                 const oldBalance = userDoc.data().balance || 0;
                 const diff = newBalance - oldBalance;
                 const oldMessageId = userDoc.data().lastMessageId;
@@ -240,12 +240,12 @@ function switchTelegramTab(tab) {
     const logsBtn = document.getElementById('tab-logs-btn');
 
     // Hide all tabs first
-    [usersTab, requestsTab, activityTab, logsTab].forEach(t => { if(t) t.classList.add('hidden'); });
-    
+    [usersTab, requestsTab, activityTab, logsTab].forEach(t => { if (t) t.classList.add('hidden'); });
+
     // Reset buttons
     [usersBtn, requestsBtn, logsBtn].forEach(b => {
-        if(b) b.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
-        if(b) b.classList.add('border-transparent', 'text-gray-500');
+        if (b) b.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+        if (b) b.classList.add('border-transparent', 'text-gray-500');
     });
 
     if (tab === 'users') {
@@ -259,10 +259,10 @@ function switchTelegramTab(tab) {
         requestsBtn.classList.remove('border-transparent', 'text-gray-500');
         loadRechargeRequests();
     } else if (tab === 'activity') {
-        if(activityTab) activityTab.classList.remove('hidden');
+        if (activityTab) activityTab.classList.remove('hidden');
     } else if (tab === 'logs') {
-        if(logsTab) logsTab.classList.remove('hidden');
-        if(logsBtn) {
+        if (logsTab) logsTab.classList.remove('hidden');
+        if (logsBtn) {
             logsBtn.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
             logsBtn.classList.remove('border-transparent', 'text-gray-500');
         }
@@ -273,20 +273,20 @@ function switchTelegramTab(tab) {
 function viewUserActivity() {
     const tgId = document.getElementById('edit-telegram-id').value;
     const username = document.getElementById('edit-telegram-username').textContent;
-    
+
     if (!tgId) return;
-    
+
     // Mark as read in Firestore
     if (window.markAsRead) {
         window.markAsRead(`user_${tgId}`);
     }
-    
+
     const userBadge = document.getElementById(`badge-user-${tgId}`);
     if (userBadge) userBadge.classList.add('hidden');
-    
+
     closeEditTelegramModal();
     switchTelegramTab('activity');
-    
+
     document.getElementById('activity-user-title').textContent = `نشاط المستخدم: ${username}`;
     loadUserActivity(tgId);
 }
@@ -294,20 +294,20 @@ function viewUserActivity() {
 async function loadUserActivity(telegramId) {
     const list = document.getElementById('user-activity-list');
     if (!list) return;
-    
+
     list.innerHTML = '<div class="text-center py-10 text-gray-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i>جاري جلب النشاط...</div>';
-    
+
     try {
         const idStr = String(telegramId);
         // We will fetch from both 'transactions' and 'patients' (bookedBy)
         const transQuery = db_telegram.collection('transactions').where('telegramId', '==', idStr).limit(50).get();
         const patientsQuery = db_telegram.collection('patients').where('bookedBy', '==', idStr).limit(50).get();
-        
+
         const [transSnap, patientsSnap] = await Promise.all([transQuery, patientsQuery]);
-        
+
         let activities = [];
         const bookedPatientIds = new Set();
-        
+
         patientsSnap.forEach(doc => {
             bookedPatientIds.add(doc.id);
             const data = doc.data();
@@ -322,7 +322,7 @@ async function loadUserActivity(telegramId) {
 
         transSnap.forEach(doc => {
             const data = doc.data();
-            
+
             // Skip transactions that are redundant with booking records
             if (data.type === 'purchase' && data.relatedId && bookedPatientIds.has(data.relatedId)) {
                 return;
@@ -335,10 +335,10 @@ async function loadUserActivity(telegramId) {
                 date: data.createdAt ? data.createdAt.toDate() : new Date()
             });
         });
-        
+
         // Sort all by date
         activities.sort((a, b) => b.date - a.date);
-        
+
         list.innerHTML = '';
         if (activities.length === 0) {
             list.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold">لا يوجد نشاط مسجل لهذا المستخدم.</div>';
@@ -348,13 +348,13 @@ async function loadUserActivity(telegramId) {
         activities.forEach(act => {
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-zinc-800 p-4 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm flex flex-col gap-1';
-            
+
             const dateStr = act.date.toLocaleString('ar-EG');
             let typeLabel = '';
             let colorClass = '';
             let icon = '';
             let details = act.details || '';
-            
+
             if (act.actCategory === 'transaction') {
                 if (act.type === 'recharge' || (act.amount > 0 && act.type === 'manual')) {
                     typeLabel = 'تعبئة رصيد';
@@ -378,7 +378,7 @@ async function loadUserActivity(telegramId) {
                 typeLabel = 'حجز مريض';
                 colorClass = 'text-purple-600';
                 icon = 'fa-hospital-user';
-                
+
                 // Translate governorate if it's an ID
                 const govLabels = {
                     'Baghdad': 'بغداد', 'Basra': 'البصرة', 'Nineveh': 'نينوى', 'Erbil': 'أربيل',
@@ -412,7 +412,7 @@ async function loadUserActivity(telegramId) {
             } else {
                 // Default layout for other activities
                 const amountStr = act.amount ? `${act.amount > 0 ? '+' : ''}${act.amount.toLocaleString()} د.ع` : '';
-                
+
                 card.innerHTML = `
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-2">
@@ -474,7 +474,7 @@ function loadSystemLogs() {
 
     db_telegram.collection('system_logs').orderBy('createdAt', 'desc').limit(50).onSnapshot((snapshot) => {
         list.innerHTML = '';
-        
+
         if (snapshot.empty) {
             list.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold">لا توجد إشعارات حالياً.</div>';
             return;
@@ -483,15 +483,15 @@ function loadSystemLogs() {
         snapshot.forEach((doc) => {
             const log = doc.data();
             const id = doc.id;
-            
+
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-zinc-800 p-4 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm flex items-start gap-3 animate-fade-in';
-            
+
             const dateStr = log.createdAt ? log.createdAt.toDate().toLocaleString('ar-EG') : 'قيد المعالجة';
-            
+
             let icon = 'fa-info-circle';
             let colorClass = 'text-blue-500';
-            
+
             if (log.type === 'add_patient') {
                 icon = 'fa-user-plus';
                 colorClass = 'text-green-500';
@@ -528,7 +528,7 @@ function loadRechargeRequests() {
 
     db_telegram.collection('recharge_requests').orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
         list.innerHTML = '';
-        
+
         if (snapshot.empty) {
             list.innerHTML = '<div class="text-center py-10 text-gray-500 font-bold">لا توجد طلبات تعبئة حالياً.</div>';
             return;
@@ -537,10 +537,10 @@ function loadRechargeRequests() {
         snapshot.forEach((doc) => {
             const req = doc.data();
             const id = doc.id;
-            
+
             const card = document.createElement('div');
             card.className = 'bg-white dark:bg-zinc-800 p-4 rounded-xl border border-gray-100 dark:border-zinc-700 shadow-sm flex flex-col gap-4 animate-fade-in';
-            
+
             const dateStr = req.createdAt ? new Date(req.createdAt.toDate()).toLocaleString('ar-EG') : 'قيد المعالجة';
 
             card.innerHTML = `
@@ -584,20 +584,20 @@ function approveRequest(requestId, telegramId, amount) {
 
     const userRef = db_telegram.collection('telegram_users').doc(telegramId);
     let newBalance = 0;
-    
+
     // Use transaction to ensure balance is updated correctly
     db_telegram.runTransaction(async (transaction) => {
         const userDoc = await transaction.get(userRef);
         if (!userDoc.exists) throw "المستخدم غير موجود في النظام!";
-        
+
         const currentBalance = userDoc.data().balance || 0;
         newBalance = currentBalance + amount;
-        
-        transaction.update(userRef, { 
+
+        transaction.update(userRef, {
             balance: newBalance,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         // Log transaction
         const mainDb = typeof db !== 'undefined' ? db : firebase.firestore();
         const currentAdminName = firebase.auth().currentUser ? (await mainDb.collection('users').doc(firebase.auth().currentUser.uid).get()).data().username || 'الأدمن' : 'الأدمن';
@@ -617,7 +617,7 @@ function approveRequest(requestId, telegramId, amount) {
         // Fetch user data for logging and cleanup
         const userDoc = await userRef.get();
         const userData = userDoc.data() || {};
-        
+
         // Log system event for admin activity
         if (window.logSystemEvent) {
             window.logSystemEvent('balance_update', `قام بقبول طلب شحن لـ @${userData.username || telegramId} بمبلغ ${amount.toLocaleString()}`);
@@ -651,7 +651,7 @@ function approveRequest(requestId, telegramId, amount) {
 
 function rejectRequest(requestId) {
     if (!confirm('هل أنت متأكد من رفض وحذف هذا الطلب؟')) return;
-    
+
     db_telegram.collection('recharge_requests').doc(requestId).delete()
         .then(() => alert('🗑️ تم رفض وحذف الطلب بنجاح.'))
         .catch(err => {
@@ -663,37 +663,37 @@ function rejectRequest(requestId) {
 async function openWithdrawModal() {
     const id = document.getElementById('edit-telegram-id').value;
     const currentBalance = parseFloat(document.getElementById('edit-telegram-balance').value) || 0;
-    
+
     const amountStr = prompt(`ادخل المبلغ المراد سحبه (الرصيد الحالي: ${currentBalance.toLocaleString()}):`);
     if (amountStr === null) return;
-    
+
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount <= 0) {
         alert("يرجى ادخال مبلغ صحيح");
         return;
     }
-    
+
     if (amount > currentBalance) {
         alert("المبلغ المدخل اكبر من الرصيد الحالي!");
         return;
     }
-    
+
     if (!confirm(`هل انت متأكد من سحب مبلغ ${amount.toLocaleString()} د.ع من رصيد المستخدم؟`)) return;
-    
+
     try {
         const userRef = db_telegram.collection('telegram_users').doc(id);
         const newBalance = currentBalance - amount;
-        
+
         await userRef.update({
             balance: newBalance,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        
+
         await logTransaction(id, 'withdrawal', -amount, `سحب مبلغ يدوي من قبل الإدارة`);
-        
+
         document.getElementById('edit-telegram-balance').value = newBalance;
         alert("✅ تم سحب المبلغ بنجاح.");
-        
+
     } catch (e) {
         console.error("Error withdrawing amount:", e);
         alert("حدث خطأ أثناء سحب المبلغ");
