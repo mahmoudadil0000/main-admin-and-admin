@@ -161,6 +161,16 @@ patientForm.addEventListener('submit', async (e) => {
 
         btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving Data...';
 
+        const price = parseFloat(document.getElementById('patient-price').value) || 0;
+        if (price === 0) {
+            const confirmFree = confirm(currentLang === 'ar' ? '⚠️ هل أنت متأكد من جعل هذا المريض مجاني؟ (السعر 0)' : '⚠️ Are you sure you want to make this patient free? (Price is 0)');
+            if (!confirmFree) {
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Save Patient';
+                return;
+            }
+        }
+
         const newPatient = {
             governorate: document.getElementById('patient-gov').value,
             city: document.getElementById('patient-city').value.trim(),
@@ -176,6 +186,42 @@ patientForm.addEventListener('submit', async (e) => {
             createdBy: currentUser.uid,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
+
+        // -----------------------------------------------------
+        // STRICT DUPLICATE CHECK (EXACT DATA MATCH)
+        // -----------------------------------------------------
+        const isDuplicate = allPatientsData.some(p => {
+            // 1. Name Match
+            const nameMatch = (p.patientName || '').trim().toLowerCase() === newPatient.patientName.toLowerCase();
+            
+            // 2. Location Match
+            const govMatch = (p.governorate || '') === newPatient.governorate;
+            const cityMatch = (p.city || '').trim().toLowerCase() === newPatient.city.toLowerCase();
+            
+            // 3. Case Types Match (Sorted comparison)
+            const pCases = JSON.stringify([...(p.caseTypes || [])].sort());
+            const newCases = JSON.stringify([...newPatient.caseTypes].sort());
+            const casesMatch = pCases === newCases;
+
+            // 4. Phone Numbers Match (Sorted comparison)
+            const pPhones = JSON.stringify([...(p.phoneNumbers || [])].sort());
+            const newPhones = JSON.stringify([...newPatient.phoneNumbers].sort());
+            const phonesMatch = pPhones === newPhones;
+
+            // Only return true if EVERYTHING matches exactly. 
+            // If the user changed even one field (name, number, etc.), it's a new entry.
+            return nameMatch && govMatch && cityMatch && casesMatch && phonesMatch;
+        });
+
+        if (isDuplicate) {
+            const msg = currentLang === 'ar' ? 
+                '⚠️ هذه البيانات مطابقة تماماً لمريض موجود مسبقاً!' : 
+                '⚠️ This data exactly matches a patient already in the database!';
+            alert(msg);
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Save Patient';
+            return;
+        }
 
         // Note: Make sure Firestore Rules allow writes to the 'patients' collection!
         await db.collection('patients').add(newPatient);
@@ -407,10 +453,12 @@ window.resetAdvancedFilter = function () {
 }
 
 function updateCounters(patients) {
-    const available = patients.filter(p => p.status === 'Available').length;
-    const pending = patients.filter(p => p.status === 'Pending').length;
-    const used = patients.filter(p => p.status === 'Used').length;
+    const total = allPatientsData.length;
+    const available = allPatientsData.filter(p => p.status === 'Available').length;
+    const pending = allPatientsData.filter(p => p.status === 'Pending').length;
+    const used = allPatientsData.filter(p => p.status === 'Used').length;
 
+    // Modal Counters
     const countAvailable = document.getElementById('count-available');
     const countPending = document.getElementById('count-pending');
     const countUsed = document.getElementById('count-used');
@@ -418,6 +466,28 @@ function updateCounters(patients) {
     if (countAvailable) countAvailable.textContent = available;
     if (countPending) countPending.textContent = pending;
     if (countUsed) countUsed.textContent = used;
+
+    // Dashboard Badges (Admin)
+    const badgeAll = document.getElementById('badge-patients-all');
+    const badgeAvail = document.getElementById('badge-patients-available');
+    const badgePend = document.getElementById('badge-patients-pending');
+    const badgeUsed = document.getElementById('badge-patients-used');
+
+    if (badgeAll) badgeAll.textContent = total;
+    if (badgeAvail) badgeAvail.textContent = available;
+    if (badgePend) badgePend.textContent = pending;
+    if (badgeUsed) badgeUsed.textContent = used;
+
+    // Dashboard Badges (Main Admin)
+    const badgeAllMain = document.getElementById('badge-patients-all-main');
+    const badgeAvailMain = document.getElementById('badge-patients-available-main');
+    const badgePendMain = document.getElementById('badge-patients-pending-main');
+    const badgeUsedMain = document.getElementById('badge-patients-used-main');
+
+    if (badgeAllMain) badgeAllMain.textContent = total;
+    if (badgeAvailMain) badgeAvailMain.textContent = available;
+    if (badgePendMain) badgePendMain.textContent = pending;
+    if (badgeUsedMain) badgeUsedMain.textContent = used;
 }
 
 function renderPatientsList(patients) {
@@ -460,13 +530,19 @@ function renderPatientsList(patients) {
         const images = p.imageUrls || (p.imageUrl ? [p.imageUrl] : []);
         const mainImage = images.length > 0 ? images[0] : null;
 
-        const imageHtml = mainImage ? `
-            <div class="w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex-shrink-0 border border-zinc-100 dark:border-zinc-700">
-                <img src="${mainImage}" alt="Patient" class="w-full h-full object-cover" onclick="event.stopPropagation(); window.open('${mainImage}', '_blank')">
-            </div>
-        ` : `
-            <div class="w-14 h-14 rounded-xl bg-gray-50 dark:bg-zinc-900/50 flex items-center justify-center flex-shrink-0 border border-gray-100 dark:border-zinc-700">
-                <i class="fa-solid fa-user text-zinc-300 dark:text-zinc-700 text-base"></i>
+        const imageHtml = `
+            <div class="flex flex-col items-center gap-1.5 flex-shrink-0">
+                <div class="w-14 h-14 rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-700 shadow-sm">
+                    ${mainImage ? 
+                        `<img src="${mainImage}" alt="Patient" class="w-full h-full object-cover cursor-zoom-in" onclick="event.stopPropagation(); window.open('${mainImage}', '_blank')">` : 
+                        `<div class="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-zinc-900/50"><i class="fa-solid fa-user text-zinc-300 dark:text-zinc-700 text-lg"></i></div>`
+                    }
+                </div>
+                <div class="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800">
+                    <span class="text-[9px] font-black text-emerald-600 dark:text-emerald-400">
+                        ${(p.price || 0).toLocaleString()} IQD
+                    </span>
+                </div>
             </div>
         `;
 
@@ -921,7 +997,7 @@ function ensureEditModalExists() {
                     </div>
 
                     <div>
-                        <label class="block font-bold mb-1 text-green-600">Patient Price (سعر المريض)</label>
+                        <label class="block font-bold mb-1 text-green-600">Patient Price (IQD)</label>
                         <input type="number" id="edit-patient-price" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold text-green-600">
                     </div>
 
@@ -1187,6 +1263,44 @@ window.saveEditedPatient = async function () {
             lastModifiedBy: currentAdminName,
             lastModifiedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
+
+        // -----------------------------------------------------
+        // STRICT DUPLICATE CHECK (EXCLUDING SELF)
+        // -----------------------------------------------------
+        const isDuplicate = allPatientsData.some(p => {
+            if (p.id === patientId) return false; // Ignore self
+
+            // 1. Name Match
+            const nameMatch = (p.patientName || '').trim().toLowerCase() === updatedData.patientName.toLowerCase();
+            
+            // 2. Location Match
+            const govMatch = (p.governorate || '') === updatedData.governorate;
+            const cityMatch = (p.city || '').trim().toLowerCase() === updatedData.city.toLowerCase();
+            
+            // 3. Case Types Match (Sorted)
+            const pCases = JSON.stringify([...(p.caseTypes || [])].sort());
+            const newCases = JSON.stringify([...updatedData.caseTypes].sort());
+            const casesMatch = pCases === newCases;
+
+            // 4. Phone Numbers Match (Sorted)
+            const pPhones = JSON.stringify([...(p.phoneNumbers || [])].sort());
+            const newPhones = JSON.stringify([...updatedData.phoneNumbers].sort());
+            const phonesMatch = pPhones === newPhones;
+
+            // Only a duplicate if EVERYTHING identity-related is identical
+            return nameMatch && govMatch && cityMatch && casesMatch && phonesMatch;
+        });
+
+        if (isDuplicate) {
+            const msg = currentLang === 'ar' ? 
+                '⚠️ مريض آخر يمتلك نفس هذه البيانات تماماً موجود مسبقاً!' : 
+                '⚠️ Another patient with this exact data already exists!';
+            alert(msg);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-floppy-disk mr-1"></i> Save Changes';
+            return;
+        }
+
         // Reset booking info display but KEEP data for history
         const newStatus = document.getElementById('edit-patient-status').value;
         if (newStatus !== window.currentPatientOriginalStatus) {
@@ -1264,4 +1378,41 @@ window.removeImageFromEdit = function (idx) {
             if (btn) btn.setAttribute('onclick', `removeImageFromEdit(${i})`);
         });
     }
+}
+// -----------------------------------------------------
+// AUTO-INITIALIZE DASHBOARD COUNTERS
+// -----------------------------------------------------
+function initDashboardPatientCounters() {
+    if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+        // Set up real-time listener for the entire patients collection
+        firebase.firestore().collection('patients').onSnapshot(snapshot => {
+            allPatientsData = [];
+            snapshot.forEach(doc => {
+                allPatientsData.push({ id: doc.id, ...doc.data() });
+            });
+            
+            // Update the badges on dashboard cards and modal counters
+            if (typeof updateCounters === 'function') {
+                updateCounters(allPatientsData);
+            }
+            
+            // If the modal is currently open, refresh the list too
+            const modal = document.getElementById('patient-info-modal');
+            if (modal && !modal.classList.contains('hidden')) {
+                if (typeof filterPatients === 'function') filterPatients();
+            }
+        }, (err) => {
+            console.error("Dashboard Counters Listener Error:", err);
+        });
+    } else {
+        // Firebase might still be loading, retry shortly
+        setTimeout(initDashboardPatientCounters, 500);
+    }
+}
+
+// Start the initialization process
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboardPatientCounters);
+} else {
+    initDashboardPatientCounters();
 }
