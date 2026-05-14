@@ -99,18 +99,23 @@
                     class="group bg-white dark:bg-zinc-800 rounded-[2.5rem] aspect-square flex flex-col items-center justify-center cursor-pointer shadow-lg shadow-gray-100/50 dark:shadow-none border border-gray-50 dark:border-zinc-700 hover:scale-[1.02] transition-all">
                     <div
                         class="relative w-16 h-16 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center mb-4 text-2xl group-hover:bg-purple-500 group-hover:text-white transition-all">
-                        <div id="badge-patients-all-main" class="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-blue-600/40">0</div>
+                        <div id="badge-patients-all-main"
+                            class="absolute -top-1 -right-1 w-6 h-6 bg-blue-600 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg shadow-blue-600/40">
+                            0</div>
                         <i class="fa-solid fa-notes-medical"></i>
                     </div>
                     <h2 class="font-black text-sm md:text-base mb-3" data-i18n="patient-info">بيانات المرضى</h2>
                     <div class="flex gap-1.5 text-[10px] font-black">
-                        <div class="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
                             <span id="badge-patients-available-main">0</span>
                         </div>
-                        <div class="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
                             <span id="badge-patients-pending-main">0</span>
                         </div>
-                        <div class="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
+                        <div
+                            class="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
                             <span id="badge-patients-used-main">0</span>
                         </div>
                     </div>
@@ -217,9 +222,11 @@
         <div
             class="bg-white dark:bg-zinc-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade-in-up flex flex-col max-h-[90vh]">
             <!-- Sticky Header — always visible, never disappears -->
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0 relative z-10 bg-white dark:bg-zinc-800">
+            <div
+                class="px-6 py-4 border-b border-gray-100 dark:border-zinc-700 flex justify-between items-center shrink-0 relative z-10 bg-white dark:bg-zinc-800">
                 <h2 class="text-xl font-bold">Edit Admin</h2>
-                <button id="edit-admin-close-btn" type="button" class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                <button id="edit-admin-close-btn" type="button"
+                    class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
                     <i class="fa-solid fa-xmark text-xl pointer-events-none"></i>
                 </button>
             </div>
@@ -773,7 +780,7 @@
                     <i class="fa-solid fa-users mr-1"></i> المستخدمين
                 </button>
                 <button id="tab-requests-btn" onclick="switchTelegramTab('requests')"
-                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative hidden">
+                    class="px-4 py-3 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors relative">
                     <i class="fa-solid fa-money-bill-wave mr-1"></i> طلبات التعبئة
                     <span id="requests-badge"
                         class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold"></span>
@@ -1034,7 +1041,7 @@
 
         // Wrap toggleLanguage to handle direction
         const originalToggle = window.toggleLanguage;
-        window.toggleLanguage = function() {
+        window.toggleLanguage = function () {
             if (typeof originalToggle === 'function') originalToggle();
             document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
         };
