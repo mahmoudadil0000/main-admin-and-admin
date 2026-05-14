@@ -27,13 +27,15 @@ body {
     align-items: center;
 }
 
-.login-container, .dashboard-container {
+.login-container,
+.dashboard-container {
     width: 100%;
     max-width: 400px;
     padding: 20px;
 }
 
-.login-card, .dashboard-card {
+.login-card,
+.dashboard-card {
     background-color: var(--card-bg);
     border-radius: 16px;
     padding: 40px 30px;
@@ -136,8 +138,13 @@ body {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .dashboard-card h1 {
