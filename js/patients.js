@@ -564,7 +564,9 @@ function renderPatientsList(patients) {
         const card = document.createElement('div');
         card.className = `${config.cardBg} rounded-xl p-4 border ${config.cardBorder} shadow-sm hover:shadow-md transition-all animate-fade-in-up cursor-pointer mb-2`;
         card.onclick = (e) => {
-            if (!e.target.closest('button') && !e.target.closest('img')) editPatient(p.id);
+            if (!e.target.closest('button') && !e.target.closest('img')) {
+                if (can('edit-patient')) editPatient(p.id);
+            }
         };
 
         card.innerHTML = `
@@ -620,9 +622,11 @@ function renderPatientsList(patients) {
                 <!-- Actions (Only for admin views) -->
                 ${window.location.pathname.includes('customer') ? '' : `
                     <div class="flex items-center gap-1.5">
+                        ${can('edit-patient') ? `
                         <button onclick="event.stopPropagation(); editPatient('${p.id}')" class="w-8 h-8 rounded-lg bg-gray-50 dark:bg-zinc-900 text-zinc-400 hover:text-blue-500 transition-colors flex items-center justify-center">
                             <i class="fa-solid fa-pen-to-square text-xs"></i>
                         </button>
+                        ` : ''}
                     </div>
                 `}
             </div>
@@ -1017,7 +1021,9 @@ function ensureEditModalExists() {
                     </div>
 
                     <div class="flex justify-between pt-4 mt-4 border-t border-gray-200 dark:border-zinc-700">
+                        ${can('delete-patient') ? `
                         <button type="button" onclick="deletePatient()" class="px-4 py-2 bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 rounded-lg font-semibold transition-colors"><i class="fa-solid fa-trash mr-1"></i> Delete</button>
+                        ` : '<div></div>'}
                         <div class="flex gap-2">
                             <button type="button" onclick="closeEditPatientModal()" class="px-4 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-700 dark:text-gray-300 dark:hover:bg-zinc-600 rounded-lg font-semibold transition-colors">Cancel</button>
                             <button type="submit" id="edit-save-btn" class="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-semibold transition-colors shadow-lg shadow-blue-600/30"><i class="fa-solid fa-floppy-disk mr-1"></i> Save Changes</button>
@@ -1240,6 +1246,10 @@ window.addEditPhoneInput = function (val = '') {
 }
 
 window.saveEditedPatient = async function () {
+    if (!can('edit-patient')) {
+        alert(currentLang === 'ar' ? 'ليس لديك صلاحية تعديل المرضى.' : 'You do not have permission to edit patients.');
+        return;
+    }
     const btn = document.getElementById('edit-save-btn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...';
@@ -1381,6 +1391,10 @@ window.togglePatientHistory = function () {
 }
 
 window.deletePatient = async function () {
+    if (!can('delete-patient')) {
+        alert(currentLang === 'ar' ? 'ليس لديك صلاحية حذف المرضى.' : 'You do not have permission to delete patients.');
+        return;
+    }
     const patientId = document.getElementById('edit-patient-id').value;
     if (!confirm('Are you absolutely sure you want to delete this patient? This cannot be undone.')) return;
 
