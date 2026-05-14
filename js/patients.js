@@ -1,6 +1,8 @@
 // Patient Modal Wizard Logic
 let currentStep = 1;
 const totalSteps = 4;
+let importedImageUrls = []; // Store URLs from PDF system
+let allPatientsData = []; // Store all patients from Firestore
 
 const patientModal = document.getElementById('add-patient-modal');
 const patientForm = document.getElementById('add-patient-form');
@@ -10,10 +12,32 @@ const btnSubmit = document.getElementById('btn-submit');
 const progressBar = document.getElementById('step-progress-bar');
 
 window.openAddPatientModal = function() {
+    // If currentUserData is not yet loaded (auth-guard still resolving), wait briefly then retry.
+    if (!window.currentUserData) {
+        let attempts = 0;
+        const waitForAuth = setInterval(() => {
+            attempts++;
+            if (window.currentUserData) {
+                clearInterval(waitForAuth);
+                window.openAddPatientModal();
+            } else if (attempts >= 30) { // 3 seconds max
+                clearInterval(waitForAuth);
+                alert('Authentication timeout. Please refresh the page.');
+            }
+        }, 100);
+        return;
+    }
+
+    if (typeof can === 'function' && !can('add-patient')) {
+        alert('You do not have permission to add patients. (ليس لديك صلاحية إضافة مرضى)');
+        return;
+    }
     patientModal.classList.remove('hidden');
     currentStep = 1;
+    importedImageUrls = [];
     patientForm.reset();
     updateWizardUI();
+    updateImportedImagesPreview();
 }
 
 window.closeAddPatientModal = function() {
@@ -146,7 +170,7 @@ patientForm.addEventListener('submit', async (e) => {
             phoneNumbers: Array.from(document.querySelectorAll('.patient-phone')).map(el => el.value.trim()).filter(val => val !== ''),
             notes: document.getElementById('patient-notes').value.trim(),
             price: parseFloat(document.getElementById('patient-price').value) || 0,
-            imageUrls: imageUrls,
+            imageUrls: [...importedImageUrls, ...imageUrls], // Combine imported and new images
             status: 'Available',
             createdBy: currentUser.uid,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -187,6 +211,22 @@ const patientInfoModal = document.getElementById('patient-info-modal');
 const patientsListContainer = document.getElementById('patients-list-container');
 
 window.openPatientInfoModal = function() {
+    // If currentUserData is not yet loaded (auth-guard still resolving), wait briefly then retry.
+    if (!window.currentUserData) {
+        let attempts = 0;
+        const waitForAuth = setInterval(() => {
+            attempts++;
+            if (window.currentUserData) {
+                clearInterval(waitForAuth);
+                window.openPatientInfoModal();
+            } else if (attempts >= 30) { // 3 seconds max
+                clearInterval(waitForAuth);
+                alert('Authentication timeout. Please refresh the page.');
+            }
+        }, 100);
+        return;
+    }
+
     if(patientInfoModal) {
         patientInfoModal.classList.remove('hidden');
         loadPatientsList();
@@ -206,7 +246,7 @@ if(patientInfoModal) {
     });
 }
 
-let allPatientsData = [];
+// Global patients data is already declared at the top of the file
 // Helper to resolve UID to Name
 const usersCache = {};
 async function getUserName(uid) {
@@ -509,6 +549,231 @@ window.updatePatientStatus = async function(patientId, newStatus) {
         alert("Error updating status: " + err.message);
     }
 }
+
+// -----------------------------------------------------
+// PDF System Integration Logic
+// -----------------------------------------------------
+const MAP_GOV = {
+    "بغداد": "Baghdad", "البصرة": "Basra", "نينوى": "Nineveh", "أربيل": "Erbil",
+    "النجف": "Najaf", "كربلاء": "Karbala", "بابل": "Babil", "ذي قار": "Dhi Qar",
+    "الأنبار": "Al Anbar", "ميسان": "Maysan", "ديالى": "Diyala", "القادسية": "Al-Qādisiyyah",
+    "واسط": "Wasit", "السليمانية": "Sulaymaniyah", "دهوك": "Duhok", "كركوك": "Kirkuk",
+    "المثنى": "Muthanna", "حلبجة": "Halabja"
+};
+
+const MAP_CASE = {
+    "اورتو": "Ortho", "ميدسن": "Medicine", "بيدو": "Pedo",
+    "بروس": "Pros", "بريو": "Perio", "اوبرتف": "Operative", "اكزو": "Exo"
+};
+
+const MAP_DAY = {
+    "السبت": "Saturday", "الأحد": "Sunday", "الاثنين": "Monday",
+    "الثلاثاء": "Tuesday", "الأربعاء": "Wednesday", "الخميس": "Thursday", "الجمعة": "Friday"
+};
+
+window.openImportPdfModal = function () {
+    const savedData = localStorage.getItem('patient_pdf_data_v5');
+    let pages = [];
+    if (savedData) {
+        try { pages = JSON.parse(savedData); } catch (e) { pages = []; }
+    }
+
+    const validPages = pages.filter(p => p.name || p.phone);
+    if (validPages.length === 0) {
+        alert(currentLang === 'ar' ? 'لا توجد بيانات محفوظة في نظام PDF حالياً.' : 'No saved data found in the PDF system.');
+        return;
+    }
+
+    let importModal = document.getElementById('import-pdf-modal');
+    if (!importModal) {
+        const modalHtml = `
+            <div id="import-pdf-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                <div class="bg-white dark:bg-zinc-900 rounded-[2rem] shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-up flex flex-col max-h-[85vh]">
+                    <div class="px-6 py-4 border-b border-gray-100 dark:border-zinc-800 flex justify-between items-center bg-gray-50 dark:bg-zinc-800/50">
+                        <h2 class="text-lg font-black flex items-center gap-2">
+                            <i class="fa-solid fa-file-import text-rose-500"></i>
+                            <span>استيراد بيانات مريض</span>
+                        </h2>
+                        <button onclick="document.getElementById('import-pdf-modal').remove()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="px-6 py-3 border-b border-gray-50 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                            <input type="text" id="pdf-import-search" oninput="filterPdfImportList()" placeholder="بحث بالاسم أو الصفحة..." class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-zinc-800 border-none rounded-xl text-sm focus:ring-2 focus:ring-rose-500">
+                        </div>
+                    </div>
+
+                    <div class="p-6 overflow-y-auto flex-1 space-y-3" id="import-list">
+                        <!-- Items populated here -->
+                    </div>
+                    <div class="p-4 bg-gray-50 dark:bg-zinc-800/50 text-center text-[10px] text-gray-400 font-bold flex justify-between px-6">
+                        <span>إجمالي الصفحات: ${validPages.length}</span>
+                        <span>يتم الجلب من التخزين المحلي فقط</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        importModal = document.getElementById('import-pdf-modal');
+        importModal.addEventListener('click', (e) => {
+            if (e.target === importModal) importModal.remove();
+        });
+    }
+
+    window.allPdfPagesForImport = pages; // Store for search
+    renderPdfImportList(validPages);
+};
+
+window.renderPdfImportList = function (pagesToRender) {
+    const listContainer = document.getElementById('import-list');
+    if (!listContainer) return;
+
+    // Check which ones are already in Firestore (if allPatientsData is available)
+    const existingPhones = new Set(allPatientsData.flatMap(p => p.phoneNumbers || []));
+    const existingNames = new Set(allPatientsData.map(p => (p.patientName || '').toLowerCase()));
+
+    listContainer.innerHTML = pagesToRender.slice().reverse().map((p) => {
+        const originalIndex = window.allPdfPagesForImport.indexOf(p);
+        const isImported = existingPhones.has(p.phone) || (p.name && existingNames.has(p.name.toLowerCase()));
+
+        return `
+            <div onclick="importPatientData(${originalIndex})" class="group p-4 rounded-2xl bg-gray-50 dark:bg-zinc-800 border-2 ${isImported ? 'border-emerald-100 dark:border-emerald-900/30' : 'border-transparent'} hover:border-rose-400 hover:bg-white dark:hover:bg-zinc-700 cursor-pointer transition-all flex items-center gap-4 relative">
+                <div class="w-10 h-10 rounded-full ${isImported ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 dark:bg-rose-900/30 text-rose-500'} flex items-center justify-center text-sm font-black flex-shrink-0">
+                    ${isImported ? '<i class="fa-solid fa-check"></i>' : (p.name ? p.name[0] : '#')}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-black text-sm truncate">${p.name || 'مريض بدون اسم'}</h3>
+                        <span class="text-[9px] font-bold text-gray-400 bg-gray-100 dark:bg-zinc-700 px-1 rounded">P#${originalIndex + 1}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 font-bold">${p.phone || 'بدون رقم هاتف'}</p>
+                    <div class="flex gap-2 mt-1">
+                        <span class="text-[9px] px-1.5 py-0.5 bg-gray-200 dark:bg-zinc-600 rounded text-gray-600 dark:text-gray-300 font-bold">${p.province || '-'}</span>
+                        <span class="text-[9px] px-1.5 py-0.5 bg-rose-50 dark:bg-rose-900/20 rounded text-rose-600 dark:text-rose-400 font-bold">${(p.cases || []).join(' • ') || '-'}</span>
+                    </div>
+                </div>
+                ${isImported ? '<span class="absolute top-2 right-2 text-[8px] font-black text-emerald-500 uppercase tracking-tighter bg-emerald-50 px-1 rounded">Imported</span>' : '<i class="fa-solid fa-chevron-left text-gray-300 group-hover:text-rose-500 transition-colors"></i>'}
+            </div>
+        `;
+    }).join('');
+};
+
+window.filterPdfImportList = function () {
+    const term = document.getElementById('pdf-import-search').value.toLowerCase();
+    const filtered = window.allPdfPagesForImport.filter((p, idx) => {
+        const matchesName = (p.name || '').toLowerCase().includes(term);
+        const matchesPage = String(idx + 1) === term;
+        return matchesName || matchesPage;
+    }).filter(p => p.name || p.phone); // Still only show valid pages
+    renderPdfImportList(filtered);
+};
+
+window.importPatientData = function (index) {
+    const savedData = localStorage.getItem('patient_pdf_data_v5');
+    if (!savedData) return;
+    try {
+        const pages = JSON.parse(savedData);
+        const p = pages[index];
+        if (!p) return;
+
+        // Basic Info
+        document.getElementById('patient-name').value = p.name || '';
+        const phonesContainer = document.getElementById('phone-numbers-container');
+        phonesContainer.innerHTML = '';
+        if (p.phone) {
+            const div = document.createElement('div');
+            div.className = 'flex gap-2';
+            div.innerHTML = `
+                <input type="tel" class="patient-phone flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" value="${p.phone}">
+                <button type="button" onclick="addPhoneInput()" class="px-4 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition-colors"><i class="fa-solid fa-plus"></i></button>
+            `;
+            phonesContainer.appendChild(div);
+        } else {
+            addPhoneInput();
+        }
+
+        // Location Mapping
+        if (p.province && MAP_GOV[p.province]) {
+            document.getElementById('patient-gov').value = MAP_GOV[p.province];
+        }
+
+        // Case Mapping (Checkboxes)
+        const caseInputs = document.querySelectorAll('input[name="patient-case"]');
+        caseInputs.forEach(input => input.checked = false); // Reset
+        if (p.cases && p.cases.length > 0) {
+            p.cases.forEach(c => {
+                if (MAP_CASE[c]) {
+                    const target = Array.from(caseInputs).find(input => input.value === MAP_CASE[c]);
+                    if (target) target.checked = true;
+                }
+            });
+        }
+
+        // Days Mapping
+        const dayInputs = document.querySelectorAll('input[name="patient-days"]');
+        dayInputs.forEach(input => input.checked = false); // Reset
+        if (p.day && MAP_DAY[p.day]) {
+            const target = Array.from(dayInputs).find(input => input.value === MAP_DAY[p.day]);
+            if (target) target.checked = true;
+        }
+
+        // Images
+        importedImageUrls = p.imageUrls || [];
+        updateImportedImagesPreview();
+
+        // Notes
+        document.getElementById('patient-notes').value = `[Imported from PDF Page #${index + 1}]\n${p.notes || ''}`;
+
+        // Close import modal and alert success
+        const importModal = document.getElementById('import-pdf-modal');
+        if (importModal) importModal.remove();
+
+        // Move to last step for review
+        currentStep = 4;
+        updateWizardUI();
+
+        alert(`Data for ${p.name || 'Unnamed'} imported successfully! Please review and save.`);
+
+    } catch (e) {
+        console.error("Import failed:", e);
+        alert("Failed to import data.");
+    }
+};
+
+window.updateImportedImagesPreview = function () {
+    const existingPreview = document.getElementById('imported-images-preview');
+    if (existingPreview) existingPreview.remove();
+
+    if (importedImageUrls.length === 0) return;
+
+    const container = document.createElement('div');
+    container.id = 'imported-images-preview';
+    container.className = 'mt-4 p-4 bg-rose-50 dark:bg-rose-900/10 rounded-2xl border border-rose-100 dark:border-rose-900/30';
+    container.innerHTML = `
+        <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <i class="fa-solid fa-images"></i>
+            <span>Imported Images (${importedImageUrls.length})</span>
+        </p>
+        <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            ${importedImageUrls.map((url, idx) => `
+                <div class="relative w-16 h-16 rounded-xl overflow-hidden border-2 border-white dark:border-zinc-800 shadow-sm flex-shrink-0 group">
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <button type="button" onclick="importedImageUrls.splice(${idx}, 1); updateImportedImagesPreview();" class="absolute top-0.5 right-0.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    const fileInput = document.getElementById('patient-image');
+    if (fileInput) {
+        fileInput.parentElement.appendChild(container);
+    }
+};
 
 // -----------------------------------------------------
 // Edit Patient Full Flow
