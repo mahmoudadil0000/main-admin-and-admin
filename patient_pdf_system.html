@@ -3,7 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
     <title>نظام إدارة بيانات المرضى - PDF الذكي</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -568,7 +569,7 @@
                 padding-left: 10px;
                 padding-right: 10px;
             }
-            
+
             .toolbar-title {
                 font-size: 14px !important;
                 white-space: nowrap;
@@ -594,52 +595,50 @@
                 border-bottom: 1px solid #e2e8f0;
                 min-height: calc(100vh - var(--toolbar-height));
             }
-...
 
+            ... @media print {
 
-        @media print {
+                .toolbar,
+                .sidebar,
+                .no-print,
+                .action-overlay,
+                .jump-btn {
+                    display: none !important;
+                }
 
-            .toolbar,
-            .sidebar,
-            .no-print,
-            .action-overlay,
-            .jump-btn {
-                display: none !important;
+                body {
+                    background: white;
+                    overflow: visible;
+                }
+
+                .viewport {
+                    overflow: visible;
+                    display: block;
+                    height: auto;
+                }
+
+                .page-container {
+                    box-shadow: none;
+                    height: auto;
+                    min-height: auto;
+                    page-break-after: always;
+                }
             }
 
-            body {
-                background: white;
-                overflow: visible;
+            #toast {
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #1e293b;
+                color: white;
+                padding: 10px 25px;
+                border-radius: 40px;
+                font-weight: bold;
+                z-index: 2000;
+                display: none;
+                font-size: 12px;
             }
-
-            .viewport {
-                overflow: visible;
-                display: block;
-                height: auto;
-            }
-
-            .page-container {
-                box-shadow: none;
-                height: auto;
-                min-height: auto;
-                page-break-after: always;
-            }
-        }
-
-        #toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            padding: 10px 25px;
-            border-radius: 40px;
-            font-weight: bold;
-            z-index: 2000;
-            display: none;
-            font-size: 12px;
-        }
     </style>
 </head>
 
@@ -664,10 +663,22 @@
         <div class="sidebar hidden" id="sidebar">
             <div class="sidebar-header">
                 <h3 style="margin:0">سجل المرضى</h3>
-                <button class="btn btn-secondary btn-small" onclick="toggleSidebar()">✕</button>
+                <div class="flex gap-2">
+                    <button class="btn btn-secondary btn-small" onclick="toggleBulkDeleteMode()" title="تحديد متعدد">
+                        <i class="fa-solid fa-list-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-small" onclick="toggleSidebar()">✕</button>
+                </div>
             </div>
             <div class="thumb-list-container" id="thumbListContainer">
                 <div id="thumbList"></div>
+            </div>
+            <div id="sidebarControls">
+                <div class="p-4 border-t border-gray-100">
+                    <button onclick="addNewPage()" class="btn btn-primary w-full">
+                        <i class="fa-solid fa-plus"></i> إضافة صفحة
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -685,6 +696,9 @@
         let pages = [];
         let currentIndex = 0;
         let lastSavedPages = [];
+        let isAddingNewPage = false;
+        let isBulkDeleteMode = false;
+        let selectedIndices = new Set();
 
         const PROVINCES = ["بغداد", "البصرة", "نينوى", "أربيل", "النجف", "كربلاء", "ذي قار", "بابل", "السليمانية", "الأنبار", "ديالى", "كركوك", "صلاح الدين", "المثنى", "ميسان", "واسط", "دهوك", "القادسية"];
         const DAYS = ["السبت", "الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
@@ -717,6 +731,67 @@
 
             setupScrollSpy();
         }
+
+        window.toggleBulkDeleteMode = function () {
+            isBulkDeleteMode = !isBulkDeleteMode;
+            selectedIndices.clear();
+            renderThumbnails();
+
+            const controls = document.getElementById('sidebarControls');
+            if (isBulkDeleteMode) {
+                controls.innerHTML = `
+                    <div class="flex flex-col gap-2 p-4 border-t border-gray-100 bg-gray-50">
+                        <button onclick="selectAllPages()" class="btn btn-secondary w-full">تحديد الكل</button>
+                        <button id="bulkDeleteBtn" onclick="confirmBulkDelete()" class="btn btn-primary" style="background: #ef4444; border:none;" disabled>
+                            <i class="fa-solid fa-trash-can"></i> حذف المحدد (0)
+                        </button>
+                        <button onclick="toggleBulkDeleteMode()" class="btn btn-secondary">إلغاء</button>
+                    </div>
+                `;
+            } else {
+                controls.innerHTML = `
+                    <div class="p-4 border-t border-gray-100">
+                        <button onclick="addNewPage()" class="btn btn-primary w-full">
+                            <i class="fa-solid fa-plus"></i> إضافة صفحة
+                        </button>
+                    </div>
+                `;
+            }
+        };
+
+        window.selectAllPages = function() {
+            if (selectedIndices.size === pages.length) {
+                selectedIndices.clear();
+            } else {
+                pages.forEach((_, i) => selectedIndices.add(i));
+            }
+            renderThumbnails();
+            updateBulkDeleteBtn();
+        };
+
+        function updateBulkDeleteBtn() {
+            const btn = document.getElementById('bulkDeleteBtn');
+            if (btn) {
+                btn.disabled = selectedIndices.size === 0;
+                btn.innerHTML = `<i class="fa-solid fa-trash-can"></i> حذف المحدد (${selectedIndices.size})`;
+            }
+        }
+
+        window.confirmBulkDelete = function () {
+            if (selectedIndices.size === 0) return;
+            if (confirm(`هل أنت متأكد من حذف ${selectedIndices.size} صفحات؟`)) {
+                pages = pages.filter((_, i) => !selectedIndices.has(i));
+                if (pages.length === 0) pages.push(createNewPageData());
+                localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+                isBulkDeleteMode = false;
+                selectedIndices.clear();
+                currentIndex = 0;
+                renderAllPages();
+                toggleBulkDeleteMode();
+                toggleBulkDeleteMode();
+                showToast("تم الحذف بنجاح");
+            }
+        };
 
         function createNewPageData() {
             return { id: Date.now(), name: '', phone: '', province: '', city: '', days: [], cases: [], notes: '', images: [], isSaved: false, isEditMode: true };
@@ -800,8 +875,6 @@
 
                         <div class="view-mode ${!page.isEditMode ? 'active-mode' : ''}">
                             <div class="report-frame">
-                                <!-- Cleaned Header: Removed icon, title, id/date, and first section title -->
-
                                 <div class="premium-grid" style="margin-top:20px">
                                     <div class="premium-item"><div class="premium-label">الاسم</div><div class="premium-value">${page.name || '-'}</div></div>
                                     <div class="premium-item"><div class="premium-label">الهاتف</div><div class="premium-value">${page.phone || '-'}</div></div>
@@ -847,7 +920,6 @@
                 viewport.appendChild(pageEl);
             });
 
-            updateAddButtons();
             renderThumbnails();
         }
 
@@ -877,8 +949,6 @@
         }
 
         function savePage(idx) {
-            // Allow saving empty pages if the user wants to keep a placeholder
-
             pages[idx].isSaved = true;
             pages[idx].isEditMode = false;
             localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
@@ -890,30 +960,41 @@
 
         function setEditMode(idx, mode) {
             if (!pages[idx]) return;
+            
+            // LOCK LOGIC: If trying to edit an existing page while adding a new one
+            if (mode && isAddingNewPage && idx !== currentIndex) {
+                const choice = confirm("لا يمكن بقاء الصفحة الجديدة مسودة، يجب عليك إما حذف المسودة أو إكمال بياناتها وحفظها لكي تتمكن من تعديل صفحة أخرى. هل تريد حذف المسودة الآن؟");
+                if (choice) {
+                    pages.splice(currentIndex, 1);
+                    localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+                    lastSavedPages = JSON.parse(JSON.stringify(pages));
+                    isAddingNewPage = false;
+                    
+                    // Adjust target index after deletion
+                    let targetIdx = idx;
+                    if (currentIndex < idx) targetIdx = idx - 1;
+                    
+                    pages[targetIdx].isEditMode = true;
+                    currentIndex = targetIdx;
+                    renderAllPages();
+                }
+                return;
+            }
+
             if (mode) {
                 const otherEditIdx = pages.findIndex((p, i) => i !== idx && p.isEditMode);
                 if (otherEditIdx > -1) {
-
                     const baseline = lastSavedPages[otherEditIdx];
                     const hasChanged = !baseline || JSON.stringify(pages[otherEditIdx]) !== JSON.stringify(baseline);
-                    
                     if (hasChanged && !isPageEmpty(otherEditIdx)) {
                         const confirmSave = confirm(`هناك تعديلات غير محفوظة في الصفحة ${otherEditIdx + 1}. هل تريد حفظها؟`);
-                        if (confirmSave) {
-                            savePage(otherEditIdx);
-                        } else if (baseline) {
-                            // Revert to baseline
-                            pages[otherEditIdx] = JSON.parse(JSON.stringify(baseline));
-                        }
-                        // If it was a new page (no baseline) and user said "No" to save, we just keep it as is but exit edit mode
+                        if (confirmSave) savePage(otherEditIdx);
+                        else if (baseline) pages[otherEditIdx] = JSON.parse(JSON.stringify(baseline));
                     } else if (hasChanged && isPageEmpty(otherEditIdx) && baseline) {
-                        // If it's empty but had a baseline, revert to baseline
                         pages[otherEditIdx] = JSON.parse(JSON.stringify(baseline));
                     }
-                    
                     pages[otherEditIdx].isEditMode = false;
                 }
-
             }
             pages[idx].isEditMode = mode;
             renderAllPages();
@@ -929,30 +1010,25 @@
             }
         }
 
-        function addNewPage() {
+        window.addNewPage = function () {
+            if (isBulkDeleteMode) return;
             const last = pages[pages.length - 1];
-            // Allow adding if last is saved OR if last is empty (effectively a placeholder)
-            if (last && !last.isSaved && !isPageEmpty(pages.length - 1)) { 
-                showToast("أكمل حفظ المريض الحالي أولاً"); 
-                return; 
+            if (last && !last.isSaved && !isPageEmpty(pages.length - 1)) {
+                showToast("أكمل حفظ المريض الحالي أولاً");
+                return;
             }
-            
-            // If the last page is empty and unsaved, we don't need to add another one, just use it
             if (last && !last.isSaved && isPageEmpty(pages.length - 1)) {
                 showToast("استخدم الصفحة الحالية الفارغة");
                 const el = document.getElementById(`page-${pages.length - 1}`);
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
                 return;
             }
-
+            isAddingNewPage = true;
             const newPage = createNewPageData();
             pages.push(newPage);
-            // Save to localStorage immediately so it persists
             localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
             lastSavedPages[pages.length - 1] = JSON.parse(JSON.stringify(newPage));
             renderAllPages();
-
-
             setTimeout(() => { const el = document.getElementById(`page-${pages.length - 1}`); if (el) el.scrollIntoView({ behavior: 'smooth' }); }, 100);
         }
 
@@ -964,47 +1040,78 @@
             const limit = MAX_IMAGES - pages[idx].images.length;
             let filesToProcess = Math.min(files.length, limit);
             if (filesToProcess <= 0) return;
-
             showToast("جاري رفع الصور...");
-            
             for (let i = 0; i < filesToProcess; i++) {
                 try {
                     const formData = new FormData();
                     formData.append('file', files[i]);
                     formData.append('upload_preset', 'patient');
                     formData.append('folder', 'patients');
-                    
-                    const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/dpda74vzy/image/upload', {
-                        method: 'POST',
-                        body: formData
-                    });
+                    const cloudinaryRes = await fetch('https://api.cloudinary.com/v1_1/dpda74vzy/image/upload', { method: 'POST', body: formData });
                     const cloudinaryData = await cloudinaryRes.json();
-                    
                     if (cloudinaryData.secure_url) {
                         pages[idx].images.push(cloudinaryData.secure_url);
                         renderAllPages();
                     }
-                } catch (err) {
-                    console.error("Cloudinary Error:", err);
-                    showToast("فشل رفع إحدى الصور");
-                }
+                } catch (err) { console.error(err); showToast("فشل رفع الصور"); }
             }
-            showToast("تم رفع الصور بنجاح");
             e.target.value = '';
         }
 
         function removeImage(pIdx, iIdx) { if (pages[pIdx]) { pages[pIdx].images.splice(iIdx, 1); renderAllPages(); } }
+        
         function renderThumbnails() {
             const list = document.getElementById('thumbList');
             list.innerHTML = '';
             pages.forEach((p, i) => {
                 const item = document.createElement('div');
                 item.className = `thumbnail-item ${i === currentIndex ? 'active' : ''}`;
-                item.onclick = () => { const el = document.getElementById(`page-${i}`); if (el) el.scrollIntoView({ behavior: 'smooth' }); };
                 item.innerHTML = `<div class="page-tag">صفحة ${i + 1}</div><div class="status-badge ${p.isSaved ? 'saved' : ''}">${p.isSaved ? 'نهائي' : 'مسودة'}</div><div class="thumbnail-title">${p.name || 'سجل جديد'}</div>`;
+
+                if (isBulkDeleteMode) {
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'absolute top-2 right-2 z-10';
+                    checkbox.style.width = '20px';
+                    checkbox.style.height = '20px';
+                    checkbox.checked = selectedIndices.has(i);
+                    checkbox.onclick = (e) => {
+                        e.stopPropagation();
+                        if (e.target.checked) selectedIndices.add(i);
+                        else selectedIndices.delete(i);
+                        updateBulkDeleteBtn();
+                    };
+                    item.appendChild(checkbox);
+                }
+
+                item.onclick = () => {
+                    if (isBulkDeleteMode) return;
+                    if (isAddingNewPage && i !== currentIndex) {
+                        const isEmpty = isPageEmpty(currentIndex);
+                        const msg = isEmpty ? "هناك صفحة جديدة فارغة. هل تريد حذفها والذهاب لصفحة أخرى؟" : "يجب إكمال الصفحة الجديدة أولاً. هل تريد حذفها؟";
+                        
+                        if (confirm(msg)) {
+                            pages.splice(currentIndex, 1);
+                            localStorage.setItem('patient_pdf_data_v5', JSON.stringify(pages));
+                            lastSavedPages = JSON.parse(JSON.stringify(pages));
+                            isAddingNewPage = false;
+                            
+                            // Adjust index if we removed a page before the target
+                            let targetIdx = i;
+                            if (currentIndex < i) targetIdx = i - 1;
+                            
+                            currentIndex = targetIdx;
+                            renderAllPages();
+                        } else return;
+                    } else {
+                        const el = document.getElementById(`page-${i}`); 
+                        if (el) el.scrollIntoView({ behavior: 'smooth' }); 
+                    }
+                };
                 list.appendChild(item);
             });
         }
+
         function jumpToLastPage() { const lastPage = document.getElementById(`page-${pages.length - 1}`); if (lastPage) lastPage.scrollIntoView({ behavior: 'smooth' }); }
 
         function setupScrollSpy() {
